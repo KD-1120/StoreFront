@@ -1,0 +1,34 @@
+{
+  "storeName": "Demo Store",
+  "products": [
+    {
+      "id": 1,
+      "name": "Stylish T-Shirt",
+      "description": "A comfortable and stylish t-shirt for everyday wear.",
+      "price": 19.99,
+      "image": "/images/tshirt.jpg",
+      "category": "Clothing"
+    },
+    {
+      "id": 2,
+      "name": "Elegant Watch",
+      "description": "A sleek and elegant watch to complement your outfit.",
+      "price": 99.99,
+      "image": "/images/watch.jpg",
+      "category": "Accessories"
+    },
+    {
+      "id": 3,
+      "name": "Running Shoes",
+      "description": "Lightweight and durable running shoes for all terrains.",
+      "price": 49.99,
+      "image": "/images/shoes.jpg",
+      "category": "Footwear"
+    }
+  ],
+  "categories": [
+    "Clothing",
+    "Accessories",
+    "Footwear"
+  ]
+}

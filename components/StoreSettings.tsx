@@ -225,7 +225,7 @@ export function StoreSettings({ store, onStoreUpdate }: StoreSettingsProps) {
         </Card>
 
         <div className="flex justify-end">
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" disabled={loading} style={{ backgroundColor: '#030213', color: 'white' }}>
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             <Save className="mr-2 h-4 w-4" />
             Save Settings

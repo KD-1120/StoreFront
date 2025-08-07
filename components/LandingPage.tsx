@@ -7,6 +7,7 @@ import { Check, Store, Zap, BarChart3, Globe, CreditCard, Shield } from 'lucide-
 
 export function LandingPage() {
   const [isSignupOpen, setIsSignupOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const testBackend = async () => {
     try {
@@ -36,7 +37,8 @@ export function LandingPage() {
               <h1 className="text-xl font-semibold">StoreFront</h1>
               <Badge variant="secondary">SaaS</Badge>
             </div>
-            <div className="flex items-center space-x-4">
+            {/* Desktop nav */}
+            <div className="hidden md:flex items-center space-x-4">
               <Button variant="ghost" onClick={() => window.location.href = '/dashboard'}>
                 Dashboard
               </Button>
@@ -50,8 +52,46 @@ export function LandingPage() {
                 Start Free Trial
               </Button>
             </div>
+            {/* Mobile burger */}
+            <button
+              className="md:hidden flex items-center justify-center p-2 rounded focus:outline-none"
+              aria-label="Open menu"
+              onClick={() => setMobileMenuOpen(true)}
+            >
+              <svg className="w-7 h-7 text-primary" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
           </div>
         </div>
+        {/* Mobile full-screen menu */}
+        {mobileMenuOpen && (
+          <div className="fixed inset-0 z-50 bg-background/95 flex flex-col items-center justify-center transition-all duration-300">
+            <button
+              className="absolute top-6 right-6 p-2 rounded focus:outline-none"
+              aria-label="Close menu"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <nav className="flex flex-col gap-6 text-center w-full max-w-xs mx-auto">
+              <Button size="lg" variant="ghost" className="w-full" onClick={() => { window.location.href = '/dashboard'; setMobileMenuOpen(false); }}>
+                Dashboard
+              </Button>
+              <Button size="lg" variant="outline" className="w-full" onClick={() => { testBackend(); setMobileMenuOpen(false); }}>
+                Test API
+              </Button>
+              <Button size="lg" variant="outline" className="w-full" onClick={() => { testStorefront(); setMobileMenuOpen(false); }}>
+                Demo Store
+              </Button>
+              <Button size="lg" className="w-full" onClick={() => { setIsSignupOpen(true); setMobileMenuOpen(false); }}>
+                Start Free Trial
+              </Button>
+            </nav>
+          </div>
+        )}
       </header>
 
       {/* Hero Section */}
@@ -125,7 +165,7 @@ export function LandingPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground leading-relaxed">
-                  Get your own branded subdomain (yourstore.stylehub.com) or connect your custom domain for maximum credibility.
+                  Get your own branded subdomain (yourstore.storefront.com) or connect your custom domain for maximum credibility.
                 </p>
               </CardContent>
             </Card>
@@ -211,7 +251,7 @@ export function LandingPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-green-500" />
-                  <span className="text-sm">StyleHub subdomain</span>
+                  <span className="text-sm">StoreFront subdomain</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-green-500" />
@@ -290,7 +330,7 @@ export function LandingPage() {
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl mb-4">Ready to Start Selling?</h2>
           <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Join thousands of businesses already selling with StyleHub. Create your store today and start accepting orders in minutes.
+            Join businesses now selling with StoreFront. Create your store today and start accepting orders in minutes.
           </p>
           <Button size="lg" onClick={() => setIsSignupOpen(true)}>
             Create Your Store Now
@@ -305,7 +345,7 @@ export function LandingPage() {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <Store className="w-6 h-6 text-primary" />
-                <span className="font-semibold">StyleHub</span>
+                <span className="font-semibold">StoreFront</span>
               </div>
               <p className="text-sm text-muted-foreground">
                 The easiest way to create your online store.
@@ -316,7 +356,6 @@ export function LandingPage() {
               <div className="space-y-2 text-sm text-muted-foreground">
                 <div>Features</div>
                 <div>Pricing</div>
-                <div>Templates</div>
                 <div>Integrations</div>
               </div>
             </div>
@@ -339,9 +378,9 @@ export function LandingPage() {
               </div>
             </div>
           </div>
-          <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
-            © 2024 StyleHub. All rights reserved.
-          </div>
+            <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
+              © 2025 StoreFront. All rights reserved.
+            </div>
         </div>
       </footer>
 

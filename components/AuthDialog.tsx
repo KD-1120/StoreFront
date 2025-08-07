@@ -40,7 +40,10 @@ export function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
       return;
     }
 
-    const { error, success, requiresEmailConfirmation } = await signUp(signUpData.email, signUpData.password, signUpData.name);
+    const result = await signUp(signUpData.email, signUpData.password, signUpData.name);
+    const error = result.error;
+    const success = 'success' in result ? result.success : undefined;
+    const requiresEmailConfirmation = 'requiresEmailConfirmation' in result ? result.requiresEmailConfirmation : undefined;
     
     if (error) {
       if (requiresEmailConfirmation) {
@@ -66,17 +69,17 @@ export function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
     e.preventDefault();
     setLoading(true);
 
-    const { error, success } = await signIn(signInData.email, signInData.password);
-    
-    if (error) {
-      toast.error(error);
-    } else if (success) {
+    const result = await signIn(signInData.email, signInData.password);
+
+    if ('error' in result && result.error) {
+      toast.error(result.error);
+    } else if ('success' in result && result.success) {
       toast.success('Signed in successfully!');
       setTimeout(() => {
         onClose();
       }, 1000);
     }
-    
+
     setLoading(false);
   };
 

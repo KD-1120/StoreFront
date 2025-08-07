@@ -53,6 +53,7 @@ export function Cart({ isOpen, onClose, items, onUpdateItem, total, onCheckout }
                       <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
                         <ImageWithFallback
                           src={item.product.image}
+                          fallbackSrc="/fallback-image.png"
                           alt={item.product.name}
                           className="w-full h-full object-cover"
                         />

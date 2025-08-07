@@ -3,6 +3,7 @@ import { Storefront } from './Storefront';
 import { Button } from './ui/button';
 import { toast } from 'sonner';
 import { Store, Product } from '../App';
+import { projectId, publicAnonKey } from '../utils/supabase/info';
 
 interface StoreBuilderPanelProps {
   store: Store;
@@ -16,42 +17,118 @@ export function StoreBuilderPanel({ store, products, onPublish, onStoreUpdate }:
   const [isPublishing, setIsPublishing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
-    // Simulate saving logic (e.g., API call or local storage update)
-    setTimeout(() => {
-      toast.success('Draft saved!');
+    
+    try {
+      // Save to Supabase first
+      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-8a855376/stores/${store.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${publicAnonKey}`,
+        },
+        body: JSON.stringify(draft),
+      });
+
+      if (response.ok) {
+        // Also persist draft to localStorage as backup
+        const key = `demo-store-${store.ownerId || 'demo-user'}`;
+        localStorage.setItem(key, JSON.stringify(draft));
+        
+        toast.success('Draft saved!');
+        onStoreUpdate(draft); // Notify parent of store update
+      } else {
+        // If Supabase fails, fall back to localStorage only
+        console.warn('Failed to save to Supabase, using localStorage fallback');
+        const key = `demo-store-${store.ownerId || 'demo-user'}`;
+        localStorage.setItem(key, JSON.stringify(draft));
+        toast.success('Draft saved locally!');
+        onStoreUpdate(draft);
+      }
+    } catch (error) {
+      console.error('Save error:', error);
+      // Fallback to localStorage
+      const key = `demo-store-${store.ownerId || 'demo-user'}`;
+      localStorage.setItem(key, JSON.stringify(draft));
+      toast.success('Draft saved locally!');
+      onStoreUpdate(draft);
+    } finally {
       setIsSaving(false);
-      onStoreUpdate(draft); // Notify parent of store update
-    }, 1000);
+    }
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     if (!draft.name.trim()) {
       toast.error('Store name is required');
       return;
     }
+    
     setIsPublishing(true);
     const publishedStore = { ...draft, published: true };
-    onPublish(publishedStore);
-    setIsPublishing(false);
-    toast.success('Store published!');
+    
+    try {
+      // Publish to Supabase
+      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-8a855376/stores/${store.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${publicAnonKey}`,
+        },
+        body: JSON.stringify(publishedStore),
+      });
+
+      if (response.ok) {
+        onPublish(publishedStore);
+        toast.success('Store published!');
+      } else {
+        // Fallback to localStorage if Supabase fails
+        console.warn('Failed to publish to Supabase, using localStorage fallback');
+        onPublish(publishedStore);
+        toast.success('Store published locally!');
+      }
+    } catch (error) {
+      console.error('Publish error:', error);
+      // Fallback to localStorage
+      onPublish(publishedStore);
+      toast.success('Store published locally!');
+    } finally {
+      setIsPublishing(false);
+    }
   };
 
   const handleImageUpload = (field: keyof Store['settings']) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (ev) => {
+      reader.onload = async (ev) => {
         const imageData = ev.target?.result as string;
-        setDraft((prev) => {
-          const updatedDraft = {
-            ...prev,
-            settings: { ...prev.settings, [field]: imageData },
-          };
-          onStoreUpdate(updatedDraft); // Notify parent of the update
-          return updatedDraft;
-        });
+        const updatedDraft = {
+          ...draft,
+          settings: { ...draft.settings, [field]: imageData },
+        };
+        
+        setDraft(updatedDraft);
+        
+        try {
+          // Save to Supabase immediately for real-time updates
+          await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-8a855376/stores/${store.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${publicAnonKey}`,
+            },
+            body: JSON.stringify(updatedDraft),
+          });
+        } catch (error) {
+          console.warn('Failed to save image update to Supabase:', error);
+        }
+        
+        // Also persist to localStorage as backup
+        const key = `demo-store-${store.ownerId || 'demo-user'}`;
+        localStorage.setItem(key, JSON.stringify(updatedDraft));
+        
+        onStoreUpdate(updatedDraft); // Notify parent of the update
       };
       reader.readAsDataURL(file);
     }

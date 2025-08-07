@@ -129,10 +129,17 @@ export default function App() {
       // First, try to find the store in localStorage (for demo stores)
       console.log('All localStorage keys:', Object.keys(localStorage));
       const localStorageKeys = Object.keys(localStorage);
+      
+      // Debug: Print all localStorage contents
+      localStorageKeys.forEach(key => {
+        console.log(`localStorage[${key}]:`, localStorage.getItem(key));
+      });
+      
       const demoStoreKeys = localStorageKeys.filter(key => key.startsWith('demo-store-'));
       
       console.log('Looking for demo stores in localStorage:', demoStoreKeys);
       
+      // Check demo-store- keys first
       for (const demoStoreKey of demoStoreKeys) {
         try {
           const storedStore = localStorage.getItem(demoStoreKey);
@@ -148,6 +155,27 @@ export default function App() {
           }
         } catch (e) {
           console.log('Failed to parse demo store from localStorage:', e);
+        }
+      }
+      
+      // If no demo-store- keys match, check all localStorage keys for store objects
+      console.log('No demo-store- keys matched, checking all localStorage keys...');
+      for (const key of localStorageKeys) {
+        if (key.startsWith('demo-store-')) continue; // Already checked above
+        try {
+          const storedData = localStorage.getItem(key);
+          if (storedData) {
+            const parsedData = JSON.parse(storedData);
+            // Check if it looks like a store object with subdomain
+            if (parsedData && parsedData.subdomain === subdomain && parsedData.name && parsedData.settings) {
+              console.log('Found matching store in localStorage with key:', key, parsedData);
+              setStore(parsedData);
+              setAppMode('storefront');
+              return;
+            }
+          }
+        } catch (e) {
+          // Not JSON or not a store object, skip
         }
       }
       

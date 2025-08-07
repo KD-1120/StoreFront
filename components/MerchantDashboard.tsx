@@ -8,7 +8,7 @@ import { StoreSettings } from './StoreSettings';
 import { DashboardOverview } from './DashboardOverview';
 import { Store, Product } from '../App';
 import { StoreBuilderPanel } from './StoreBuilderPanel';
-import { projectId } from '../utils/supabase/info';
+import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { toast } from 'sonner';
 import demoStoreData from '../public/demoStoreData.json';
 
@@ -151,6 +151,28 @@ export function MerchantDashboard() {
     }
   };
 
+  const createStoreInSupabase = async (store: Store) => {
+    try {
+      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-8a855376/stores`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${publicAnonKey}`,
+        },
+        body: JSON.stringify(store),
+      });
+
+      if (response.ok) {
+        console.log('Store created in Supabase successfully');
+      } else {
+        const errorData = await response.json();
+        console.warn('Failed to create store in Supabase:', errorData);
+      }
+    } catch (error) {
+      console.error('Error creating store in Supabase:', error);
+    }
+  };
+
   const createDefaultStore = () => {
     // Check if we already have a stored demo store
     const existingStoreKey = `demo-store-${user?.id || 'demo-user'}`;
@@ -186,6 +208,10 @@ export function MerchantDashboard() {
 
     // Save to localStorage for persistence
     localStorage.setItem(existingStoreKey, JSON.stringify(defaultStore));
+    
+    // Also create the store in Supabase
+    createStoreInSupabase(defaultStore);
+    
     setStore(defaultStore);
 
     console.log('Created new demo store:', defaultStore);

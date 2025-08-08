@@ -5,7 +5,7 @@ import { Storefront } from './components/Storefront';
 import { LandingPage } from './components/LandingPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { getSubdomain, getAppMode, sanitizeSubdomain } from './utils/routing';
-import { StoreService } from './utils/supabase/stores';
+import { StoreService, dbStoreToAppStore } from './utils/supabase/stores';
 import { Toaster } from 'sonner';
 import { Database } from './utils/supabase/types';
 
@@ -147,11 +147,12 @@ export default function App() {
       console.log('Fetching store from database for slug:', subdomain);
       
       // Fetch store from Supabase
-      const storeData = await StoreService.getStoreBySlug(subdomain);
+      const dbStore = await StoreService.getStoreBySlug(subdomain);
       
-      if (storeData) {
-        console.log('Store found:', storeData);
-        setStore(storeData);
+      if (dbStore) {
+        console.log('Store found:', dbStore);
+        const appStore = dbStoreToAppStore(dbStore);
+        setStore(appStore);
         setAppMode('storefront');
       } else {
         console.log('Store not found for subdomain:', subdomain);

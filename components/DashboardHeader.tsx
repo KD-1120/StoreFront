@@ -4,6 +4,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Store, ExternalLink, User, LogOut, Settings } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { generateStoreUrl } from '../utils/routing';
+import { toast } from 'sonner';
 
 interface DashboardHeaderProps {
   store: any;
@@ -15,6 +16,11 @@ export function DashboardHeader({ store, user, className }: DashboardHeaderProps
   const { signOut } = useAuth();
 
   const handleViewStore = () => {
+    if (!store.published) {
+      toast.error('Please publish your store first to view it publicly');
+      return;
+    }
+    
     const storeUrl = generateStoreUrl(store.subdomain);
     window.open(storeUrl, '_blank');
   };
@@ -39,7 +45,7 @@ export function DashboardHeader({ store, user, className }: DashboardHeaderProps
           <div className="flex items-center space-x-4">
             <Button variant="outline" onClick={handleViewStore} className="hidden sm:flex">
               <ExternalLink className="w-4 h-4 mr-2" />
-              View Store
+              {store.published ? 'View Store' : 'Store Not Published'}
             </Button>
 
             <DropdownMenu>
@@ -56,7 +62,7 @@ export function DashboardHeader({ store, user, className }: DashboardHeaderProps
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleViewStore} className="sm:hidden">
                   <ExternalLink className="mr-2 h-4 w-4" />
-                  <span>View Store</span>
+                  <span>{store.published ? 'View Store' : 'Store Not Published'}</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Settings className="mr-2 h-4 w-4" />

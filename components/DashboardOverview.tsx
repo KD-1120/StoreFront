@@ -93,7 +93,7 @@ export function DashboardOverview({ store }: DashboardOverviewProps) {
         <div className="flex flex-col sm:flex-row gap-2">
           <Button variant="outline" onClick={() => window.open(storeUrl, '_blank')}>
             <ExternalLink className="w-4 h-4 mr-2" />
-            View Store
+            {store.published ? 'View Store' : 'Store Not Published'}
           </Button>
           <Button style={{ backgroundColor: '#030303ff', color: 'white' }}>
             <Plus className="w-4 h-4 mr-2" />

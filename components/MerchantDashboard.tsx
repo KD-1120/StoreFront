@@ -9,6 +9,7 @@ import { StoreSettings } from './StoreSettings';
 import { DashboardOverview } from './DashboardOverview';
 import { Store, Product } from '../App';
 import { StoreBuilderPanel } from './StoreBuilderPanel';
+import { StoreService, dbStoreToAppStore } from '../utils/supabase/stores';
 import { toast } from 'sonner';
 
 export function MerchantDashboard() {
@@ -29,34 +30,10 @@ export function MerchantDashboard() {
   const loadStore = async () => {
     try {
       // Try to load store from Supabase first
-      const { StoreService } = await import('../utils/supabase/stores');
       const userStores = await StoreService.getUserStores();
       
       if (userStores.length > 0) {
-        // Convert Supabase store to app Store format
-        const dbStore = userStores[0];
-        const appStore: Store = {
-          id: dbStore.id,
-          name: dbStore.name,
-          subdomain: dbStore.slug,
-          ownerId: dbStore.user_id,
-          settings: {
-            primaryColor: dbStore.theme_color || '#030213',
-            logoUrl: dbStore.logo_url || '',
-            description: dbStore.description || '',
-            contactEmail: user?.email || '',
-            currency: 'USD',
-            heroButtonText: 'Shop Now',
-            heroSubtext1: 'Free Delivery',
-            heroSubtext2: '30-Day Returns',
-            heroImage: '',
-            heroBadge1: 'New',
-            heroBadge2: '50% Off',
-            collections: [],
-          },
-          createdAt: dbStore.created_at,
-          published: dbStore.is_active,
-        };
+        const appStore = dbStoreToAppStore(userStores[0]);
         setStore(appStore);
       } else {
         createDefaultStore();
@@ -80,24 +57,12 @@ export function MerchantDashboard() {
       const slug = `${cleanName}${timestamp}`;
 
       // Create store in Supabase
-      const { StoreService } = await import('../utils/supabase/stores');
       const dbStore = await StoreService.createStore({
         name: user.user_metadata?.full_name ? `${user.user_metadata.full_name}'s Store` : 'My Store',
         slug: slug,
         description: 'Welcome to my online store',
         theme_color: '#030213',
-      });
-
-      // Convert to app Store format
-      const appStore: Store = {
-        id: dbStore.id,
-        name: dbStore.name,
-        subdomain: dbStore.slug,
-        ownerId: dbStore.user_id,
         settings: {
-          primaryColor: dbStore.theme_color || '#030213',
-          logoUrl: dbStore.logo_url || '',
-          description: dbStore.description || '',
           contactEmail: user.email || '',
           currency: 'USD',
           heroButtonText: 'Shop Now',
@@ -107,11 +72,10 @@ export function MerchantDashboard() {
           heroBadge1: 'New',
           heroBadge2: '50% Off',
           collections: [],
-        },
-        createdAt: dbStore.created_at,
-        published: dbStore.is_active,
-      };
+        }
+      });
 
+      const appStore = dbStoreToAppStore(dbStore);
       setStore(appStore);
       toast.success('Welcome to your new store dashboard!');
     } catch (error) {
@@ -155,12 +119,7 @@ export function MerchantDashboard() {
             store={store}
             products={products}
             onStoreUpdate={setStore}
-            onPublish={(publishedStore) => {
-              // Persist published state in localStorage for demo stores
-              const key = `demo-store-${store.ownerId || 'demo-user'}`;
-              localStorage.setItem(key, JSON.stringify({ ...publishedStore, published: true }));
-              setStore({ ...publishedStore, published: true });
-            }}
+            onPublish={setStore}
           />
         );
       case 'overview':

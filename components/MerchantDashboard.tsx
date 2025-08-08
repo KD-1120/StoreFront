@@ -50,11 +50,14 @@ export function MerchantDashboard() {
 
   useEffect(() => {
     console.log('[MerchantDashboard] useEffect: user:', user, 'loading:', loading);
-    if (user && !loading) {
-      console.log('[MerchantDashboard] User is logged in, loading store...');
-      loadStore();
-    } else if (!user && !loading) {
-      console.log('[MerchantDashboard] No user found, showing demo dashboard');
+    if (!loading) {
+      if (user) {
+        console.log('[MerchantDashboard] User is logged in, loading store...');
+        loadStore();
+      } else {
+        console.log('[MerchantDashboard] No user found, redirecting to landing page');
+        window.location.href = '/';
+      }
     }
   }, [user, loading]);
 

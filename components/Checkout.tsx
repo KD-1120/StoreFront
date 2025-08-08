@@ -7,8 +7,9 @@ import { Textarea } from './ui/textarea';
 import { Alert, AlertDescription } from './ui/alert';
 import { Loader2, CheckCircle } from 'lucide-react';
 import { CartItem } from '../App';
-import { cartService } from '../services/cartService';
 import { useAuth } from '../contexts/AuthContext';
+import { paymentProcessor, formatCurrency, calculateTax, calculateShipping } from '../utils/payment';
+import { supabase } from '../utils/supabase/client';
 
 interface CheckoutProps {
   isOpen: boolean;
@@ -17,16 +18,19 @@ interface CheckoutProps {
   total: number;
   onOrderComplete: (orderData?: any) => void;
   isStorefront?: boolean;
+  storeId?: string;
 }
 
-export function Checkout({ isOpen, onClose, items, total, onOrderComplete, isStorefront = false }: CheckoutProps) {
+export function Checkout({ isOpen, onClose, items, total, onOrderComplete, isStorefront = false, storeId }: CheckoutProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
 
   const [shippingAddress, setShippingAddress] = useState({
     fullName: user?.user_metadata?.name || '',
+    email: user?.email || '',
     street: '',
     city: '',
     state: '',
@@ -36,51 +40,136 @@ export function Checkout({ isOpen, onClose, items, total, onOrderComplete, isSto
     notes: '',
   });
 
+  // Calculate order totals
+  const subtotal = total;
+  const tax = calculateTax(subtotal);
+  const shipping = calculateShipping(subtotal);
+  const finalTotal = subtotal + tax + shipping;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
+    // Validate required fields
+    if (!shippingAddress.fullName || !shippingAddress.email || !shippingAddress.street || 
+        !shippingAddress.city || !shippingAddress.state || !shippingAddress.zipCode) {
+      setError('Please fill in all required fields');
+      setLoading(false);
+      return;
+    }
+
     try {
-      if (isStorefront) {
-        // For storefront, pass order data to parent
-        const orderData = {
-          cartItems: items,
-          total,
-          shippingAddress,
-          customerInfo: {
-            name: shippingAddress.fullName,
-            email: shippingAddress.phone, // We'll use phone as contact for now
-            phone: shippingAddress.phone,
-          },
-        };
-        onOrderComplete(orderData);
-      } else {
-        // For dashboard (original behavior)
-        await cartService.createOrder(items, total, shippingAddress);
-        onOrderComplete();
-      }
+      // Create order in database first
+      const orderData = {
+        store_id: storeId,
+        customer_email: shippingAddress.email,
+        customer_name: shippingAddress.fullName,
+        total_amount: finalTotal,
+        status: 'pending',
+        shipping_address: shippingAddress,
+      };
+
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert(orderData)
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Create order items
+      const orderItems = items.map(item => ({
+        order_id: order.id,
+        product_id: item.product.id,
+        quantity: item.quantity,
+        price: item.product.price,
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) throw itemsError;
+
+      // Process payment
+      setProcessingPayment(true);
       
-      setSuccess(true);
-      
-      setTimeout(() => {
-        onClose();
-        setSuccess(false);
-      }, 3000);
+      paymentProcessor.showPaymentModal(
+        {
+          amount: finalTotal,
+          currency: 'USD',
+          description: `Order #${order.id.slice(-8)}`,
+          customerEmail: shippingAddress.email,
+          customerName: shippingAddress.fullName,
+          storeId: storeId || '',
+          orderId: order.id,
+        },
+        async (paymentResult) => {
+          // Payment successful - update order status
+          await supabase
+            .from('orders')
+            .update({ 
+              status: 'paid',
+              payment_id: paymentResult.paymentId 
+            })
+            .eq('id', order.id);
+
+          setProcessingPayment(false);
+          setSuccess(true);
+          onOrderComplete({ ...order, items: orderItems });
+          
+          setTimeout(() => {
+            onClose();
+            setSuccess(false);
+          }, 3000);
+        },
+        async (paymentError) => {
+          // Payment failed - update order status
+          await supabase
+            .from('orders')
+            .update({ status: 'failed' })
+            .eq('id', order.id);
+
+          setProcessingPayment(false);
+          setError(paymentError);
+          setLoading(false);
+        }
+      );
+
     } catch (error: any) {
-      setError(error.message || 'Failed to process order');
-    } finally {
+      console.error('Order creation error:', error);
+      setError(error.message || 'Failed to create order');
       setLoading(false);
     }
   };
 
   const handleClose = () => {
-    if (!loading) {
+    if (!loading && !processingPayment) {
       onClose();
       setError('');
       setSuccess(false);
     }
   };
+
+  if (processingPayment) {
+    return (
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent className="sm:max-w-md">
+          <div className="text-center py-8">
+            <Loader2 className="w-16 h-16 text-primary mx-auto mb-4 animate-spin" />
+            <h3 className="text-xl mb-2">Processing Payment</h3>
+            <p className="text-muted-foreground mb-4">
+              Please wait while we process your payment...
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Do not close this window
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   if (success) {
     return (
@@ -121,14 +210,28 @@ export function Checkout({ isOpen, onClose, items, total, onOrderComplete, isSto
             <div className="space-y-2">
               {items.map((item, index) => (
                 <div key={index} className="flex justify-between text-sm">
-                  <span>{item.product.name} ({item.size}, {item.color}) x{item.quantity}</span>
+                  <span>{item.product.name} x{item.quantity}</span>
                   <span>${(item.product.price * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
+              <div className="border-t pt-2 space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span>Subtotal:</span>
+                  <span>{formatCurrency(subtotal)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Tax:</span>
+                  <span>{formatCurrency(tax)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Shipping:</span>
+                  <span>{shipping === 0 ? 'FREE' : formatCurrency(shipping)}</span>
+                </div>
+              </div>
               <div className="border-t pt-2 font-medium">
                 <div className="flex justify-between">
                   <span>Total:</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>{formatCurrency(finalTotal)}</span>
                 </div>
               </div>
             </div>
@@ -140,7 +243,7 @@ export function Checkout({ isOpen, onClose, items, total, onOrderComplete, isSto
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
+                <Label htmlFor="fullName">Full Name *</Label>
                 <Input
                   id="fullName"
                   value={shippingAddress.fullName}
@@ -150,19 +253,31 @@ export function Checkout({ isOpen, onClose, items, total, onOrderComplete, isSto
               </div>
               
               <div className="space-y-2">
+                <Label htmlFor="email">Email Address *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={shippingAddress.email}
+                  onChange={(e) => setShippingAddress(prev => ({ ...prev, email: e.target.value }))}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
                 <Label htmlFor="phone">Phone</Label>
                 <Input
                   id="phone"
                   type="tel"
                   value={shippingAddress.phone}
                   onChange={(e) => setShippingAddress(prev => ({ ...prev, phone: e.target.value }))}
-                  required
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="street">Street Address</Label>
+              <Label htmlFor="street">Street Address *</Label>
               <Input
                 id="street"
                 value={shippingAddress.street}
@@ -173,7 +288,7 @@ export function Checkout({ isOpen, onClose, items, total, onOrderComplete, isSto
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="city">City</Label>
+                <Label htmlFor="city">City *</Label>
                 <Input
                   id="city"
                   value={shippingAddress.city}
@@ -183,7 +298,7 @@ export function Checkout({ isOpen, onClose, items, total, onOrderComplete, isSto
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="state">State</Label>
+                <Label htmlFor="state">State *</Label>
                 <Input
                   id="state"
                   value={shippingAddress.state}
@@ -193,7 +308,7 @@ export function Checkout({ isOpen, onClose, items, total, onOrderComplete, isSto
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="zipCode">ZIP Code</Label>
+                <Label htmlFor="zipCode">ZIP Code *</Label>
                 <Input
                   id="zipCode"
                   value={shippingAddress.zipCode}
@@ -220,7 +335,7 @@ export function Checkout({ isOpen, onClose, items, total, onOrderComplete, isSto
             </Button>
             <Button type="submit" disabled={loading} className="flex-1">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Place Order (${total.toFixed(2)})
+              Place Order ({formatCurrency(finalTotal)})
             </Button>
           </div>
         </form>

@@ -255,6 +255,7 @@ export function Storefront({ store, products: productsProp, isEditable = false, 
         total={cartTotal}
         onOrderComplete={handleOrderComplete}
         isStorefront={true}
+        storeId={store.id}
       />
     </div>
   );

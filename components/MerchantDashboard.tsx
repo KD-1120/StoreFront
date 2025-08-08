@@ -31,11 +31,12 @@ export function MerchantDashboard() {
   const loadStore = async () => {
     try {
       // Try to load store from Supabase first
-      
+      const userStores = [];
       if (userStores.length > 0) {
         const appStore = dbStoreToAppStore(userStores[0]);
+        setStore({
         name: user.user_metadata?.full_name ? `${user.user_metadata.full_name}'s Store` : 'My Store',
-        slug: slug,
+        slug: 'slug',
         description: 'Welcome to my online store',
         theme_color: '#030213',
         settings: {
@@ -49,6 +50,8 @@ export function MerchantDashboard() {
           heroBadge2: '50% Off',
           collections: [],
         }
+        });
+        setStore({
         settings: {
           contactEmail: user.email || '',
           currency: 'USD',
@@ -61,8 +64,14 @@ export function MerchantDashboard() {
           collections: [],
         }
       });
+      }
 
+      const dbStore = {};
       const appStore = dbStoreToAppStore(dbStore);
+    } catch (error) {
+      console.error('Error loading store:', error);
+    }
+  };
 
   if (!store) {
     return (
@@ -84,6 +93,9 @@ export function MerchantDashboard() {
             products={products}
             onStoreUpdate={setStore}
             onPublish={setStore}
+          />
+        );
+      case 'products':
         return <ProductsManager store={store} />;
       case 'orders':
         return <OrdersManager store={store} />;

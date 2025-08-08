@@ -31,9 +31,9 @@ export class StoreService {
       .select('*')
       .eq('slug', slug)
       .eq('is_active', true)
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') throw error;
+    if (error) throw error;
     return data;
   }
 

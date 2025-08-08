@@ -4,10 +4,10 @@ import { MerchantDashboard } from './components/MerchantDashboard';
 import { Storefront } from './components/Storefront';
 import { LandingPage } from './components/LandingPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { getSubdomain, getAppMode } from './utils/routing';
-import { projectId, publicAnonKey } from './utils/supabase/info';
+import { getSubdomain, getAppMode, sanitizeSubdomain } from './utils/routing';
+import { StoreService } from './utils/supabase/stores';
 import { Toaster } from 'sonner';
-import demoStoreData from '../public/demoStoreData.json';
+import { Database } from './utils/supabase/types';
 
 export interface Product {
   id: string;
@@ -59,10 +59,12 @@ export interface Store {
   categories?: string[];
 }
 
+type DbStore = Database['public']['Tables']['stores']['Row'];
+
 export default function App() {
   const [appMode, setAppMode] = useState<'landing' | 'dashboard' | 'storefront' | 'loading'>('loading');
-  const [store, setStore] = useState<Store | null>(null);
-  const [demoProducts, setDemoProducts] = useState<Product[] | undefined>(undefined);
+  const [store, setStore] = useState<DbStore | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const mode = getAppMode();
@@ -71,143 +73,92 @@ export default function App() {
     console.log('Subdomain:', getSubdomain());
     
     if (mode === 'storefront') {
-      // Load store data for subdomain
       loadStoreFromSubdomain();
     } else {
       setAppMode(mode);
     }
   }, []);
 
-  useEffect(() => {
-    if (store?.id === 'demo-store') {
-      fetch('/demoStoreData.json')
-        .then((response) => response.json())
-        .then((data) => setDemoProducts(data.products))
-        .catch((error) => console.error('Failed to load demo store data:', error));
-    }
-  }, [store?.id]);
-
   const loadStoreFromSubdomain = async () => {
     try {
-      const subdomain = getSubdomain();
-      console.log('Loading store for subdomain:', subdomain);
+      const rawSubdomain = getSubdomain();
+      console.log('Raw subdomain:', rawSubdomain);
       
-      if (!subdomain) {
+      if (!rawSubdomain) {
         console.log('No subdomain found, switching to landing page');
         setAppMode('landing');
         return;
       }
 
+      // Sanitize the subdomain
+      const subdomain = sanitizeSubdomain(rawSubdomain);
+      console.log('Sanitized subdomain:', subdomain);
+      
+      if (!subdomain) {
+        console.error('Invalid subdomain format:', rawSubdomain);
+        setError('Invalid subdomain format');
+        setAppMode('landing');
+        return;
+      }
+
+      // Handle demo store
       if (subdomain === 'demo') {
-        console.log('Loading demo store directly');
-        const demoStore = {
+        console.log('Loading demo store');
+        const demoStore: DbStore = {
           id: 'demo-store',
+          user_id: 'demo-user',
           name: 'Demo Store',
-          subdomain: 'demo',
-          ownerId: 'system',
-          settings: {
-            primaryColor: '#030213',
-            logoUrl: '',
-            description: 'A beautiful online store',
-            contactEmail: 'demo@storefront.com',
-            currency: 'USD',
-            heroButtonText: 'Shop Now',
-            heroSubtext1: 'Free Shipping',
-            heroSubtext2: '30-Day Returns',
-            heroImage: '',
-            heroBadge1: 'New',
-            heroBadge2: '50% Off',
-          },
-          createdAt: new Date().toISOString(),
-          published: true,
+          slug: 'demo',
+          description: 'A beautiful demo store showcasing our platform',
+          logo_url: null,
+          theme_color: '#030213',
+          domain: null,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         };
         setStore(demoStore);
         setAppMode('storefront');
         return;
       }
 
-      // First, try to find the store in localStorage (for demo stores)
-      console.log('All localStorage keys:', Object.keys(localStorage));
-      const localStorageKeys = Object.keys(localStorage);
+      console.log('Fetching store from database for slug:', subdomain);
       
-      // Debug: Print all localStorage contents
-      localStorageKeys.forEach(key => {
-        console.log(`localStorage[${key}]:`, localStorage.getItem(key));
-      });
+      // Fetch store from Supabase
+      const storeData = await StoreService.getStoreBySlug(subdomain);
       
-      const demoStoreKeys = localStorageKeys.filter(key => key.startsWith('demo-store-'));
-      
-      console.log('Looking for demo stores in localStorage:', demoStoreKeys);
-      
-      // Check demo-store- keys first
-      for (const demoStoreKey of demoStoreKeys) {
-        try {
-          const storedStore = localStorage.getItem(demoStoreKey);
-          if (storedStore) {
-            const parsedStore = JSON.parse(storedStore);
-            console.log('Checking demo store:', parsedStore.subdomain, 'against target:', subdomain);
-            if (parsedStore.subdomain === subdomain) {
-              console.log('Found matching demo store in localStorage:', parsedStore);
-              setStore(parsedStore);
-              setAppMode('storefront');
-              return;
-            }
-          }
-        } catch (e) {
-          console.log('Failed to parse demo store from localStorage:', e);
-        }
-      }
-      
-      // If no demo-store- keys match, check all localStorage keys for store objects
-      console.log('No demo-store- keys matched, checking all localStorage keys...');
-      for (const key of localStorageKeys) {
-        if (key.startsWith('demo-store-')) continue; // Already checked above
-        try {
-          const storedData = localStorage.getItem(key);
-          if (storedData) {
-            const parsedData = JSON.parse(storedData);
-            // Check if it looks like a store object with subdomain
-            if (parsedData && parsedData.subdomain === subdomain && parsedData.name && parsedData.settings) {
-              console.log('Found matching store in localStorage with key:', key, parsedData);
-              setStore(parsedData);
-              setAppMode('storefront');
-              return;
-            }
-          }
-        } catch (e) {
-          // Not JSON or not a store object, skip
-        }
-      }
-      
-      console.log('No matching demo store found in localStorage for subdomain:', subdomain);
-
-      // If not found in localStorage, try the API
-      const url = `https://${projectId}.supabase.co/functions/v1/make-server-8a855376/stores/subdomain/${subdomain}`;
-      console.log('Fetching store from API:', url);
-
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${publicAnonKey}`,
-        },
-      });
-      
-      console.log('API response status:', response.status);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Store data received from API:', data);
-        setStore(data.store);
+      if (storeData) {
+        console.log('Store found:', storeData);
+        setStore(storeData);
         setAppMode('storefront');
       } else {
-        const errorText = await response.text();
-        console.error('Store not found for subdomain:', subdomain, 'Error:', errorText);
+        console.log('Store not found for subdomain:', subdomain);
+        setError(`Store not found for subdomain: ${subdomain}`);
         setAppMode('landing');
       }
     } catch (error) {
       console.error('Failed to load store:', error);
+      setError('Failed to load store');
       setAppMode('landing');
     }
   };
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center p-8">
+          <h2 className="text-2xl font-bold text-destructive mb-4">Store Not Found</h2>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.href = '/'}
+            className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90"
+          >
+            Go to Homepage
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <ErrorBoundary>
@@ -222,19 +173,8 @@ export default function App() {
             </div>
           )}
           {appMode === 'dashboard' && <MerchantDashboard />}
-          {appMode === 'storefront' && store && (store.id === 'demo-store' || store.published) && (
-            <Storefront 
-              store={store} 
-              products={store.id === 'demo-store' ? demoProducts : undefined} 
-            />
-          )}
-          {appMode === 'storefront' && store && !store.published && (
-            <div className="min-h-screen flex items-center justify-center">
-              <div className="text-center">
-                <h1 className="text-2xl mb-4">Store Not Published</h1>
-                <p className="text-muted-foreground">This store is not yet published. Please check back later.</p>
-              </div>
-            </div>
+          {appMode === 'storefront' && store && (
+            <Storefront store={store} />
           )}
           {appMode === 'landing' && <LandingPage />}
         </div>

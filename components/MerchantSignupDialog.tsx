@@ -5,8 +5,9 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Alert, AlertDescription } from './ui/alert';
 import { Loader2, Check } from 'lucide-react';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
-import { generateStoreUrl } from '../utils/routing';
+import { generateStoreUrl, generateSlugFromName, isValidSubdomain } from '../utils/routing';
+import { useAuth } from '../contexts/AuthContext';
+import { StoreService } from '../utils/supabase/stores';
 
 interface MerchantSignupDialogProps {
   isOpen: boolean;
@@ -14,6 +15,7 @@ interface MerchantSignupDialogProps {
 }
 
 export function MerchantSignupDialog({ isOpen, onClose }: MerchantSignupDialogProps) {
+  const { signUp } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -25,7 +27,7 @@ export function MerchantSignupDialog({ isOpen, onClose }: MerchantSignupDialogPr
     password: '',
     confirmPassword: '',
     storeName: '',
-    storeSubdomain: '',
+    storeSlug: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,46 +41,73 @@ export function MerchantSignupDialog({ isOpen, onClose }: MerchantSignupDialogPr
       return;
     }
 
-    if (formData.storeSubdomain.length < 3) {
-      setError('Subdomain must be at least 3 characters');
+    if (formData.storeSlug.length < 3) {
+      setError('Store URL must be at least 3 characters');
+      setLoading(false);
+      return;
+    }
+
+    if (!isValidSubdomain(formData.storeSlug)) {
+      setError('Store URL contains invalid characters. Use only letters, numbers, and hyphens.');
       setLoading(false);
       return;
     }
 
     try {
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-8a855376/auth/merchant-signup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${publicAnonKey}`,
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        setError(data.error || 'Signup failed');
+      // Check if slug is available
+      const isAvailable = await StoreService.isSlugAvailable(formData.storeSlug);
+      if (!isAvailable) {
+        setError('This store URL is already taken. Please choose another.');
         setLoading(false);
         return;
       }
 
+      // Sign up user
+      const result = await signUp(formData.email, formData.password, formData.name);
+      
+      if (result.error) {
+        if (result.requiresEmailConfirmation) {
+          setError(result.error);
+          // Don't create store yet, wait for email confirmation
+        } else {
+          setError(result.error);
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Create store
+      const store = await StoreService.createStore({
+        name: formData.storeName,
+        slug: formData.storeSlug,
+        description: `Welcome to ${formData.storeName}`,
+        theme_color: '#030213',
+      });
+
       setSuccess(true);
-      setStoreUrl(generateStoreUrl(formData.storeSubdomain));
+      setStoreUrl(generateStoreUrl(store.slug));
       
       setTimeout(() => {
         window.location.href = '/dashboard';
       }, 3000);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Signup error:', error);
-      setError('Network error during signup');
+      setError(error.message || 'Failed to create store');
       setLoading(false);
     }
   };
 
-  const handleSubdomainChange = (value: string) => {
-    const sanitized = value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 20);
-    setFormData(prev => ({ ...prev, storeSubdomain: sanitized }));
+  const handleStoreNameChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      storeName: value,
+      storeSlug: prev.storeSlug || generateSlugFromName(value)
+    }));
+  };
+
+  const handleSlugChange = (value: string) => {
+    const sanitized = value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 63);
+    setFormData(prev => ({ ...prev, storeSlug: sanitized }));
   };
 
   const resetForm = () => {
@@ -88,7 +117,7 @@ export function MerchantSignupDialog({ isOpen, onClose }: MerchantSignupDialogPr
       password: '',
       confirmPassword: '',
       storeName: '',
-      storeSubdomain: '',
+      storeSlug: '',
     });
     setError('');
     setSuccess(false);
@@ -208,25 +237,25 @@ export function MerchantSignupDialog({ isOpen, onClose }: MerchantSignupDialogPr
                 type="text"
                 placeholder="My Awesome Store"
                 value={formData.storeName}
-                onChange={(e) => setFormData(prev => ({ ...prev, storeName: e.target.value }))}
+                onChange={(e) => handleStoreNameChange(e.target.value)}
                 required
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="storeSubdomain">Store URL</Label>
+              <Label htmlFor="storeSlug">Store URL</Label>
               <div className="flex items-center">
                 <Input
-                  id="storeSubdomain"
+                  id="storeSlug"
                   type="text"
                   placeholder="mystore"
-                  value={formData.storeSubdomain}
-                  onChange={(e) => handleSubdomainChange(e.target.value)}
+                  value={formData.storeSlug}
+                  onChange={(e) => handleSlugChange(e.target.value)}
                   className="rounded-r-none"
                   required
                 />
                 <span className="bg-muted border border-l-0 px-3 py-2 text-sm text-muted-foreground rounded-r-md">
-                  {window.location.hostname === 'localhost' ? '?store=' : '.stylehub.com'}
+                  {window.location.hostname === 'localhost' ? '.localhost:3000' : '.stylehub.com'}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">

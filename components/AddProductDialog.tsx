@@ -6,8 +6,9 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Alert, AlertDescription } from './ui/alert';
 import { Badge } from './ui/badge';
-import { Loader2, X } from 'lucide-react';
-import { projectId } from '../utils/supabase/info';
+import { Loader2, X, Upload } from 'lucide-react';
+import { ProductService } from '../utils/supabase/products';
+import { uploadImage } from '../utils/supabase/client';
 
 interface AddProductDialogProps {
   isOpen: boolean;
@@ -15,79 +16,83 @@ interface AddProductDialogProps {
   onProductAdded: (newProduct?: any) => void;
   storeId: string;
   isBuilder?: boolean;
-  store: any; // Add the store prop
+  store: any;
 }
 
 export function AddProductDialog({ isOpen, onClose, onProductAdded, storeId, isBuilder, store }: AddProductDialogProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
 
   const [formData, setFormData] = useState({
     name: '',
     price: '',
-    image: '' as string | File, // Allow both string and File types
-    collection: '',
     description: '',
+    category: '',
   });
 
   const [newCustomField, setNewCustomField] = useState({ key: '', value: '' });
   const [customFields, setCustomFields] = useState<{ key: string; value: string }[]>([]);
 
-  const collections = store.settings.collections || [];
+  const collections = store?.settings?.collections || [];
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    const productData = {
-      ...formData,
-      price: parseFloat(formData.price),
-      storeId,
-      id: Math.random().toString(36).slice(2, 12), // temp id for builder
-      collection: formData.collection,
-      customFields: customFields.reduce<Record<string, string>>((acc: Record<string, string>, field: { key: string; value: string }) => {
-        acc[field.key] = field.value;
-        return acc;
-      }, {}),
-    };
-
-    if (isBuilder) {
-      onProductAdded(productData);
-      resetForm();
-      setLoading(false);
-      return;
-    }
-
     try {
-      const session = JSON.parse(localStorage.getItem('supabase.auth.token') || 'null');
-      const token = session?.access_token;
-
-      if (!token) {
-        setError('Authentication required');
-        setLoading(false);
-        return;
+      let imageUrl = '';
+      
+      // Upload image if provided
+      if (imageFile) {
+        imageUrl = await uploadImage('product-images', imageFile, `${storeId}/${Date.now()}`);
       }
 
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-8a855376/merchant/products`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(productData),
-      });
+      const productData = {
+        store_id: storeId,
+        name: formData.name,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        image_url: imageUrl || null,
+        category: formData.category || null,
+        inventory_count: 0,
+        is_active: true,
+      };
 
-      if (response.ok) {
-        onProductAdded();
-        resetForm();
+      if (isBuilder) {
+        // For builder mode, just pass the data to parent
+        onProductAdded({
+          ...productData,
+          id: Math.random().toString(36).slice(2, 12),
+          customFields: customFields.reduce<Record<string, string>>((acc, field) => {
+            acc[field.key] = field.value;
+            return acc;
+          }, {}),
+        });
       } else {
-        const data = await response.json();
-        setError(data.error || 'Failed to create product');
+        // Create product in database
+        const product = await ProductService.createProduct(productData);
+        onProductAdded(product);
       }
-    } catch (error) {
+
+      resetForm();
+    } catch (error: any) {
       console.error('Product creation error:', error);
-      setError('Network error during product creation');
+      setError(error.message || 'Failed to create product');
     } finally {
       setLoading(false);
     }
@@ -97,11 +102,13 @@ export function AddProductDialog({ isOpen, onClose, onProductAdded, storeId, isB
     setFormData({
       name: '',
       price: '',
-      image: '' as string | File,
-      collection: '',
       description: '',
+      category: '',
     });
     setNewCustomField({ key: '', value: '' });
+    setCustomFields([]);
+    setImageFile(null);
+    setImagePreview('');
     setError('');
   };
 
@@ -164,38 +171,13 @@ export function AddProductDialog({ isOpen, onClose, onProductAdded, storeId, isB
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="collection">Collection</Label>
-                <select
-                  id="collection"
-                  value={formData.collection || ''}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, collection: e.target.value }))}
-                  disabled={collections.length === 0}
-                  className="w-full border rounded px-3 py-2"
-                >
-                  <option value="" disabled>
-                    {collections.length === 0 ? 'No collections available' : 'Select a collection'}
-                  </option>
-                  {collections.map((collection: { id: string; name: string }) => (
-                    <option key={collection.id} value={collection.name}>
-                      {collection.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="image">Image</Label>
-                <input
-                  id="image"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setFormData((prev) => ({ ...prev, image: file }));
-                    }
-                  }}
-                  className="w-full border rounded px-3 py-2"
+                <Label htmlFor="category">Category</Label>
+                <Input
+                  id="category"
+                  type="text"
+                  placeholder="T-Shirts"
+                  value={formData.category}
+                  onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
                 />
               </div>
             </div>
@@ -210,6 +192,44 @@ export function AddProductDialog({ isOpen, onClose, onProductAdded, storeId, isB
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="image">Product Image</Label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                  {imagePreview ? (
+                    <div className="relative">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="w-full h-32 object-cover rounded"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2"
+                        onClick={() => {
+                          setImageFile(null);
+                          setImagePreview('');
+                        }}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-600">Click to upload image</p>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                </div>
               </div>
             </div>
           </div>

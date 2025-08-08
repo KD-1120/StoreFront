@@ -81,11 +81,16 @@ export class StoreService {
       .select('*')
       .eq('slug', slug)
       .eq('is_active', true)
-      .eq('is_published', true)
       .maybeSingle();
 
     if (error) throw error;
-    return data;
+    
+    // Filter by is_published if the column exists, otherwise return the store
+    if (data && (data.is_published === undefined || data.is_published === true)) {
+      return data;
+    }
+    
+    return data?.is_published !== false ? data : null;
   }
 
   // Get store by slug (including unpublished for owners)

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Storefront } from './Storefront';
 import { Button } from './ui/button';
 import { toast } from 'sonner';
+
+export default function StoreEditor() {
   const handleImageUpload = (field: keyof Store['settings']) => async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;

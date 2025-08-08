@@ -10,7 +10,6 @@ import { DashboardOverview } from './DashboardOverview';
 import { Store, Product } from '../App';
 import { StoreBuilderPanel } from './StoreBuilderPanel';
 import { StoreService, dbStoreToAppStore } from '../utils/supabase/stores';
-import { StoreService, dbStoreToAppStore } from '../utils/supabase/stores';
 import { toast } from 'sonner';
 
 export function MerchantDashboard() {

@@ -56,55 +56,6 @@ export function appStoreToDbStore(appStore: AppStore): Partial<StoreUpdate> {
   };
 }
 
-// Convert database store to app store format
-export function dbStoreToAppStore(dbStore: Store): AppStore {
-  const settings = (dbStore.settings as any) || {};
-  return {
-    id: dbStore.id,
-    name: dbStore.name,
-    subdomain: dbStore.slug,
-    ownerId: dbStore.user_id,
-    settings: {
-      primaryColor: dbStore.theme_color || '#030213',
-      logoUrl: dbStore.logo_url || '',
-      description: dbStore.description || '',
-      contactEmail: settings.contactEmail || '',
-      currency: settings.currency || 'USD',
-      heroButtonText: settings.heroButtonText || 'Shop Now',
-      heroSubtext1: settings.heroSubtext1 || 'Free Shipping',
-      heroSubtext2: settings.heroSubtext2 || '30-Day Returns',
-      heroImage: settings.heroImage || '',
-      heroBadge1: settings.heroBadge1 || 'New',
-      heroBadge2: settings.heroBadge2 || '50% Off',
-      collections: settings.collections || [],
-    },
-    createdAt: dbStore.created_at,
-    published: dbStore.is_published,
-  };
-}
-
-// Convert app store to database format
-export function appStoreToDbStore(appStore: AppStore): Partial<StoreUpdate> {
-  return {
-    name: appStore.name,
-    description: appStore.settings.description,
-    logo_url: appStore.settings.logoUrl,
-    theme_color: appStore.settings.primaryColor,
-    is_published: appStore.published,
-    settings: {
-      contactEmail: appStore.settings.contactEmail,
-      currency: appStore.settings.currency,
-      heroButtonText: appStore.settings.heroButtonText,
-      heroSubtext1: appStore.settings.heroSubtext1,
-      heroSubtext2: appStore.settings.heroSubtext2,
-      heroImage: appStore.settings.heroImage,
-      heroBadge1: appStore.settings.heroBadge1,
-      heroBadge2: appStore.settings.heroBadge2,
-      collections: appStore.settings.collections,
-    }
-  };
-}
-
 export class StoreService {
   // Create a new store
   static async createStore(storeData: Omit<StoreInsert, 'user_id'>): Promise<Store> {

@@ -62,10 +62,11 @@ export function StoreBuilderPanel({ store, products, onStoreUpdate, onPublish }:
       };
       
       setDraft(updatedDraft);
-      onStoreUpdate(updatedDraft);
       
       // Auto-save the image update
-      await StoreService.saveDraft(store.id, updatedDraft);
+      if (store.id && !store.id.startsWith('temp-') && !store.id.startsWith('fallback-')) {
+        await StoreService.saveDraft(store.id, updatedDraft);
+      }
       toast.success('Image uploaded and saved!');
     } catch (error) {
       console.error('Image upload error:', error);

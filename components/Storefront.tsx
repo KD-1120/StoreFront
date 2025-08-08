@@ -231,7 +231,7 @@ export function Storefront({ store, products: productsProp, isEditable = false, 
           heroBadge1={store.settings.heroBadge1}
           heroBadge2={store.settings.heroBadge2}
           isEditable={isEditable}
-          onImageUpload={onImageUpload?.('heroImage')}
+          onImageUpload={onImageUpload ? onImageUpload('heroImage') : undefined}
         />
         <StorefrontProductGrid products={products} onAddToCart={addToCart} />
       </main>

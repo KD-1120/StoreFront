@@ -34,12 +34,13 @@ export function Hero({ storeName, storeDescription, heroButtonText, heroSubtext1
       reader.onload = () => {
         const imageData = reader.result as string;
         setUploadedHeroImage(imageData);
-        // If there's a parent upload handler, call it too
-        if (onImageUpload) {
-          onImageUpload(e);
-        }
       };
       reader.readAsDataURL(file);
+      
+      // Call parent upload handler for actual upload
+      if (onImageUpload) {
+        onImageUpload(e);
+      }
     }
   };
 

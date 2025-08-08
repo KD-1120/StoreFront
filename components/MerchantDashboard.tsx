@@ -9,45 +9,25 @@ import { StoreSettings } from './StoreSettings';
 import { DashboardOverview } from './DashboardOverview';
 import { Store, Product } from '../App';
 import { StoreBuilderPanel } from './StoreBuilderPanel';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { toast } from 'sonner';
-import demoStoreData from '../public/demoStoreData.json';
-
-const storefrontTemplate = {
-  settings: {
-    primaryColor: '#030213',
-    logoUrl: '',
-    description: 'A beautiful online store',
-    contactEmail: 'demo@example.com',
-    currency: 'USD',
-  },
-};
 
 export function MerchantDashboard() {
-  console.log('[MerchantDashboard] Mounting');
-  const { user, loading, session } = useAuth();
+  const { user, loading } = useAuth();
 
   const [currentView, setCurrentView] = useState('builder');
   const [store, setStore] = useState<Store | null>(null);
   const [products] = useState<Product[]>([]); // TODO: integrate with ProductsManager
 
   useEffect(() => {
-    console.log('[MerchantDashboard] useEffect: user:', user, 'loading:', loading);
     if (!loading) {
       if (user) {
-        console.log('[MerchantDashboard] User is logged in, loading store...');
         loadStore();
-      } else {
-        console.log('[MerchantDashboard] No user found, redirecting to landing page');
-        window.location.href = '/';
       }
     }
   }, [user, loading]);
 
   const loadStore = async () => {
     try {
-      console.log('Starting loadStore, user:', user);
-      
       // Try to load store from Supabase first
       const { StoreService } = await import('../utils/supabase/stores');
       const userStores = await StoreService.getUserStores();
@@ -67,7 +47,7 @@ export function MerchantDashboard() {
             contactEmail: user?.email || '',
             currency: 'USD',
             heroButtonText: 'Shop Now',
-            heroSubtext1: 'Free Shipping',
+            heroSubtext1: 'Free Delivery',
             heroSubtext2: '30-Day Returns',
             heroImage: '',
             heroBadge1: 'New',
@@ -78,9 +58,7 @@ export function MerchantDashboard() {
           published: dbStore.is_active,
         };
         setStore(appStore);
-        console.log('Store loaded from Supabase:', appStore);
       } else {
-        console.log('No stores found, creating default store');
         createDefaultStore();
       }
     } catch (error) {
@@ -135,31 +113,11 @@ export function MerchantDashboard() {
       };
 
       setStore(appStore);
-      console.log('Created new store in Supabase:', appStore);
       toast.success('Welcome to your new store dashboard!');
     } catch (error) {
       console.error('Failed to create store:', error);
       toast.error('Failed to create store. Please try again.');
     }
-  };
-
-  const loadDemoStore = () => {
-    const demoStore: Store = {
-      id: 'demo-store',
-      name: demoStoreData.storeName,
-      subdomain: 'demo',
-      ownerId: 'system',
-      settings: {
-        ...storefrontTemplate.settings,
-        contactEmail: 'demo@storefront.com',
-      },
-      createdAt: new Date().toISOString(),
-      published: true, // Ensure the demo store is always published
-      products: demoStoreData.products, // Load products from JSON
-      categories: demoStoreData.categories, // Load categories from JSON
-    };
-
-    return demoStore;
   };
 
   if (loading) {
@@ -179,13 +137,11 @@ export function MerchantDashboard() {
   }
 
   if (!store) {
-    console.log('[MerchantDashboard] No store loaded for user:', user);
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Loading store...</p>
-          <div className="text-xs text-muted-foreground mt-2">(Waiting for store data... user: {JSON.stringify(user)})</div>
         </div>
       </div>
     );

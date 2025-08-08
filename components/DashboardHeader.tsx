@@ -5,6 +5,7 @@ import { Store, ExternalLink, User, LogOut, Settings } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { generateStoreUrl } from '../utils/routing';
 import { toast } from 'sonner';
+import { toast } from 'sonner';
 
 interface DashboardHeaderProps {
   store: any;
@@ -16,6 +17,11 @@ export function DashboardHeader({ store, user, className }: DashboardHeaderProps
   const { signOut } = useAuth();
 
   const handleViewStore = () => {
+    if (!store.published) {
+      toast.error('Please publish your store first to view it publicly');
+      return;
+    }
+    
     if (!store.published) {
       toast.error('Please publish your store first to view it publicly');
       return;

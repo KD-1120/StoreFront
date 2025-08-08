@@ -101,6 +101,7 @@ export function generateStoreUrl(slug: string): string {
   if (hostname === 'localhost' || hostname.startsWith('127.0.0.1')) {
     // For development, use query parameter to avoid subdomain issues
     return `${protocol}//${hostname}${port}?store=${slug}`;
+    return `${protocol}//${hostname}${port}?store=${slug}`;
   }
   
   // For other development environments (gitpod, codespaces), use query parameter

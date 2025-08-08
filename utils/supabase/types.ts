@@ -49,6 +49,7 @@ export interface Database {
           theme_color: string | null
           domain: string | null
           settings: Json | null
+          settings: Json | null
           is_active: boolean
           is_published: boolean
           created_at: string
@@ -97,6 +98,7 @@ export interface Database {
           inventory_count: number | null
           custom_fields: Json | null
           is_active: boolean
+          is_published: boolean
           created_at: string
           updated_at: string
         }
@@ -109,8 +111,10 @@ export interface Database {
           image_url?: string | null
           category?: string | null
           inventory_count?: number | null
+          settings?: Json | null
           custom_fields?: Json | null
           is_active?: boolean
+          is_published?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -124,7 +128,9 @@ export interface Database {
           category?: string | null
           inventory_count?: number | null
           custom_fields?: Json | null
+          settings?: Json | null
           is_active?: boolean
+          is_published?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -169,6 +175,8 @@ export interface Database {
           status: string
           shipping_address: Json | null
           payment_id: string | null
+          custom_fields: Json | null
+          payment_id: string | null
           created_at: string
           updated_at: string
         }
@@ -182,6 +190,8 @@ export interface Database {
           status?: string
           shipping_address?: Json | null
           payment_id?: string | null
+          custom_fields?: Json | null
+          payment_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -194,6 +204,8 @@ export interface Database {
           total_amount?: number
           status?: string
           shipping_address?: Json | null
+          payment_id?: string | null
+          custom_fields?: Json | null
           payment_id?: string | null
           created_at?: string
           updated_at?: string

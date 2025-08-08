@@ -153,6 +153,7 @@ export default function App() {
         console.log('Store found:', dbStore);
         const appStore = dbStoreToAppStore(dbStore);
         setStore(appStore);
+        setStore(appStore);
         setAppMode('storefront');
       } else {
         console.log('Store not found for subdomain:', subdomain);

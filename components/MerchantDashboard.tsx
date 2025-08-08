@@ -10,6 +10,7 @@ import { DashboardOverview } from './DashboardOverview';
 import { Store, Product } from '../App';
 import { StoreBuilderPanel } from './StoreBuilderPanel';
 import { StoreService, dbStoreToAppStore } from '../utils/supabase/stores';
+import { StoreService, dbStoreToAppStore } from '../utils/supabase/stores';
 import { toast } from 'sonner';
 
 export function MerchantDashboard() {
@@ -30,34 +31,9 @@ export function MerchantDashboard() {
   const loadStore = async () => {
     try {
       // Try to load store from Supabase first
-      const userStores = await StoreService.getUserStores();
       
       if (userStores.length > 0) {
         const appStore = dbStoreToAppStore(userStores[0]);
-        setStore(appStore);
-      } else {
-        createDefaultStore();
-      }
-    } catch (error) {
-      console.error('Failed to load store:', error);
-      createDefaultStore();
-    }
-  };
-
-  const createDefaultStore = async () => {
-    try {
-      if (!user) {
-        console.error('Cannot create store: no user');
-        return;
-      }
-
-      const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'demo';
-      const cleanName = userName.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const timestamp = Date.now().toString().slice(-4);
-      const slug = `${cleanName}${timestamp}`;
-
-      // Create store in Supabase
-      const dbStore = await StoreService.createStore({
         name: user.user_metadata?.full_name ? `${user.user_metadata.full_name}'s Store` : 'My Store',
         slug: slug,
         description: 'Welcome to my online store',
@@ -73,32 +49,20 @@ export function MerchantDashboard() {
           heroBadge2: '50% Off',
           collections: [],
         }
+        settings: {
+          contactEmail: user.email || '',
+          currency: 'USD',
+          heroButtonText: 'Shop Now',
+          heroSubtext1: 'Free Shipping',
+          heroSubtext2: '30-Day Returns',
+          heroImage: '',
+          heroBadge1: 'New',
+          heroBadge2: '50% Off',
+          collections: [],
+        }
       });
 
       const appStore = dbStoreToAppStore(dbStore);
-      setStore(appStore);
-      toast.success('Welcome to your new store dashboard!');
-    } catch (error) {
-      console.error('Failed to create store:', error);
-      toast.error('Failed to create store. Please try again.');
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
-      </div>
-    );
-  }
-
-  if (!user && !loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <AuthDialog isOpen={true} onClose={() => {}} />
-      </div>
-    );
-  }
 
   if (!store) {
     return (
@@ -120,11 +84,6 @@ export function MerchantDashboard() {
             products={products}
             onStoreUpdate={setStore}
             onPublish={setStore}
-          />
-        );
-      case 'overview':
-        return <DashboardOverview store={store} />;
-      case 'products':
         return <ProductsManager store={store} />;
       case 'orders':
         return <OrdersManager store={store} />;

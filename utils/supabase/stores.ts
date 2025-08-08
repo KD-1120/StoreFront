@@ -162,22 +162,6 @@ export class StoreService {
     return this.updateStore(storeId, updates);
   }
 
-  // Save draft (update without publishing)
-  static async saveDraft(storeId: string, appStore: AppStore): Promise<Store> {
-    const updates = appStoreToDbStore(appStore);
-    updates.is_published = false; // Ensure it's saved as draft
-    
-    return this.updateStore(storeId, updates);
-  }
-
-  // Publish store
-  static async publishStore(storeId: string, appStore: AppStore): Promise<Store> {
-    const updates = appStoreToDbStore(appStore);
-    updates.is_published = true; // Mark as published
-    
-    return this.updateStore(storeId, updates);
-  }
-
   // Delete store
   static async deleteStore(storeId: string): Promise<void> {
     const { error } = await supabase

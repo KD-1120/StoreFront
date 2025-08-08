@@ -29,46 +29,66 @@ export function MerchantDashboard() {
 
   const loadStore = async () => {
     try {
-      // Try to load store from Supabase first
-      const userStores = [];
+      // Try to load user's stores from Supabase
+      const userStores = await StoreService.getUserStores();
+      
       if (userStores.length > 0) {
+        // User has existing stores, use the first one
         const appStore = dbStoreToAppStore(userStores[0]);
-        setStore({
-        name: user.user_metadata?.full_name ? `${user.user_metadata.full_name}'s Store` : 'My Store',
-        slug: 'slug',
-        description: 'Welcome to my online store',
-        theme_color: '#030213',
-        settings: {
-          contactEmail: user.email || '',
-          currency: 'USD',
-          heroButtonText: 'Shop Now',
-          heroSubtext1: 'Free Shipping',
-          heroSubtext2: '30-Day Returns',
-          heroImage: '',
-          heroBadge1: 'New',
-          heroBadge2: '50% Off',
-          collections: [],
-        }
-        });
-        setStore({
-        settings: {
-          contactEmail: user.email || '',
-          currency: 'USD',
-          heroButtonText: 'Shop Now',
-          heroSubtext1: 'Free Shipping',
-          heroSubtext2: '30-Day Returns',
-          heroImage: '',
-          heroBadge1: 'New',
-          heroBadge2: '50% Off',
-          collections: [],
-        }
-      });
+        setStore(appStore);
+      } else {
+        // User has no stores, create a default store
+        const defaultStore: Store = {
+          id: `temp-${user.id}`,
+          name: user.user_metadata?.full_name ? `${user.user_metadata.full_name}'s Store` : 'My Store',
+          subdomain: 'temp-store',
+          ownerId: user.id,
+          settings: {
+            primaryColor: '#030213',
+            logoUrl: '',
+            description: 'Welcome to my online store',
+            contactEmail: user.email || '',
+            currency: 'USD',
+            heroButtonText: 'Shop Now',
+            heroSubtext1: 'Free Shipping',
+            heroSubtext2: '30-Day Returns',
+            heroImage: '',
+            heroBadge1: 'New',
+            heroBadge2: '50% Off',
+            collections: [],
+          },
+          createdAt: new Date().toISOString(),
+          published: false,
+        };
+        setStore(defaultStore);
       }
-
-      const dbStore = {};
-      const appStore = dbStoreToAppStore(dbStore);
     } catch (error) {
       console.error('Error loading store:', error);
+      // Create fallback store on error
+      const fallbackStore: Store = {
+        id: `fallback-${user.id}`,
+        name: 'My Store',
+        subdomain: 'fallback-store',
+        ownerId: user.id,
+        settings: {
+          primaryColor: '#030213',
+          logoUrl: '',
+          description: 'Welcome to my online store',
+          contactEmail: user.email || '',
+          currency: 'USD',
+          heroButtonText: 'Shop Now',
+          heroSubtext1: 'Free Shipping',
+          heroSubtext2: '30-Day Returns',
+          heroImage: '',
+          heroBadge1: 'New',
+          heroBadge2: '50% Off',
+          collections: [],
+        },
+        createdAt: new Date().toISOString(),
+        published: false,
+      };
+      setStore(fallbackStore);
+      toast.error('Failed to load store data, using default store');
     }
   };
 

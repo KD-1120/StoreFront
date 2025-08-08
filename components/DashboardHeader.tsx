@@ -5,7 +5,6 @@ import { Store, ExternalLink, User, LogOut, Settings } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { generateStoreUrl } from '../utils/routing';
 import { toast } from 'sonner';
-import { toast } from 'sonner';
 
 interface DashboardHeaderProps {
   store: any;

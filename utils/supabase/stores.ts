@@ -1,7 +1,6 @@
 import { supabase } from './client';
 import { Database } from './types';
 import { Store as AppStore } from '../../App';
-import { Store as AppStore } from '../../App';
 
 type Store = Database['public']['Tables']['stores']['Row'];
 type StoreInsert = Database['public']['Tables']['stores']['Insert'];
@@ -83,21 +82,6 @@ export class StoreService {
       .eq('slug', slug)
       .eq('is_active', true)
       .eq('is_published', true)
-      .eq('is_published', true)
-      .maybeSingle();
-
-    if (error) throw error;
-    return data;
-  }
-
-  // Get store by slug (including unpublished for owners)
-  static async getStoreBySlugForOwner(slug: string, userId: string): Promise<Store | null> {
-    const { data, error } = await supabase
-      .from('stores')
-      .select('*')
-      .eq('slug', slug)
-      .eq('user_id', userId)
-      .eq('is_active', true)
       .maybeSingle();
 
     if (error) throw error;

@@ -2,9 +2,52 @@ import React, { useState } from 'react';
 import { Storefront } from './Storefront';
 import { Button } from './ui/button';
 import { toast } from 'sonner';
+import { StoreService } from '../utils/supabase/stores';
 
-export function StoreBuilderPanel() {
-  const handleImageUpload = (field: keyof Store['settings']) => async (e: React.ChangeEvent<HTMLInputElement>) => {
+interface StoreBuilderPanelProps {
+  store: any;
+  products: any[];
+  onStoreUpdate: (store: any) => void;
+  onPublish?: () => void;
+}
+
+export function StoreBuilderPanel({ store, products, onStoreUpdate, onPublish }: StoreBuilderPanelProps) {
+  const [draft, setDraft] = useState(store);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await StoreService.saveDraft(store.id, draft);
+      onStoreUpdate(draft);
+      toast.success('Draft saved successfully!');
+    } catch (error) {
+      console.error('Save error:', error);
+      toast.error('Failed to save draft');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePublish = async () => {
+    setIsPublishing(true);
+    try {
+      await StoreService.publishStore(store.id);
+      const updatedStore = { ...draft, is_published: true };
+      setDraft(updatedStore);
+      onStoreUpdate(updatedStore);
+      onPublish?.();
+      toast.success('Store published successfully!');
+    } catch (error) {
+      console.error('Publish error:', error);
+      toast.error('Failed to publish store');
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  const handleImageUpload = (field: string) => async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 

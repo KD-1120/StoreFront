@@ -49,7 +49,6 @@ export interface Database {
           theme_color: string | null
           domain: string | null
           settings: Json | null
-          settings: Json | null
           is_active: boolean
           is_published: boolean
           created_at: string

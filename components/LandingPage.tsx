@@ -3,12 +3,14 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { MerchantSignupDialog } from './MerchantSignupDialog';
+import { AuthDialog } from './AuthDialog';
 import { useAuth } from '../contexts/AuthContext';
 import { Check, Store, Zap, BarChart3, Globe, CreditCard, Shield } from 'lucide-react';
 
 export function LandingPage() {
   const { user, loading } = useAuth();
   const [isSignupOpen, setIsSignupOpen] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
 
@@ -40,15 +42,19 @@ export function LandingPage() {
                 <Button variant="ghost" onClick={() => window.location.href = '/dashboard'}>
                   Dashboard
                 </Button>
-              ) : null}
+              ) : (
+                <>
+                  <Button variant="ghost" onClick={() => setIsLoginOpen(true)}>
+                    Sign In
+                  </Button>
+                  <Button onClick={() => setIsSignupOpen(true)}>
+                    Start Free Trial
+                  </Button>
+                </>
+              )}
               <Button variant="outline" onClick={testStorefront}>
                 Demo Store
               </Button>
-              {!user ? (
-                <Button onClick={() => setIsSignupOpen(true)}>
-                  Start Free Trial
-                </Button>
-              ) : null}
             </div>
             {/* Mobile burger */}
             <button
@@ -79,15 +85,19 @@ export function LandingPage() {
                 <Button size="lg" variant="ghost" className="w-full" onClick={() => { window.location.href = '/dashboard'; setMobileMenuOpen(false); }}>
                   Dashboard
                 </Button>
-              ) : null}
+              ) : (
+                <>
+                  <Button size="lg" variant="ghost" className="w-full" onClick={() => { setIsLoginOpen(true); setMobileMenuOpen(false); }}>
+                    Sign In
+                  </Button>
+                  <Button size="lg" className="w-full" onClick={() => { setIsSignupOpen(true); setMobileMenuOpen(false); }}>
+                    Start Free Trial
+                  </Button>
+                </>
+              )}
               <Button size="lg" variant="outline" className="w-full" onClick={() => { testStorefront(); setMobileMenuOpen(false); }}>
                 Demo Store
               </Button>
-              {!user ? (
-                <Button size="lg" className="w-full" onClick={() => { setIsSignupOpen(true); setMobileMenuOpen(false); }}>
-                  Start Free Trial
-                </Button>
-              ) : null}
             </nav>
           </div>
         )}
@@ -108,13 +118,23 @@ export function LandingPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               {!user ? (
-                <Button 
-                  size="lg" 
-                  onClick={() => setIsSignupOpen(true)}
-                  className="px-8 py-3 text-lg shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200"
-                >
-                  Start Free Trial
-                </Button>
+                <>
+                  <Button 
+                    size="lg" 
+                    onClick={() => setIsSignupOpen(true)}
+                    className="px-8 py-3 text-lg shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200"
+                  >
+                    Start Free Trial
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    size="lg"
+                    onClick={() => setIsLoginOpen(true)}
+                    className="px-8 py-3 text-lg hover:bg-accent/50"
+                  >
+                    Sign In
+                  </Button>
+                </>
               ) : (
                 <Button 
                   size="lg" 
@@ -124,14 +144,6 @@ export function LandingPage() {
                   Go to Dashboard
                 </Button>
               )}
-              <Button 
-                variant="outline" 
-                size="lg"
-                onClick={testStorefront}
-                className="px-8 py-3 text-lg hover:bg-accent/50"
-              >
-                View Demo
-              </Button>
             </div>
             {!user && (
               <div className="mt-8 text-sm text-muted-foreground">
@@ -398,6 +410,11 @@ export function LandingPage() {
       <MerchantSignupDialog
         isOpen={isSignupOpen}
         onClose={() => setIsSignupOpen(false)}
+      />
+      
+      <AuthDialog
+        isOpen={isLoginOpen}
+        onClose={() => setIsLoginOpen(false)}
       />
     </div>
   );

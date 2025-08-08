@@ -25,28 +25,11 @@ const storefrontTemplate = {
 
 export function MerchantDashboard() {
   console.log('[MerchantDashboard] Mounting');
-  let auth;
-  try {
-    auth = useAuth();
-    console.log('[MerchantDashboard] useAuth() result:', auth);
-  } catch (error) {
-    console.warn('[MerchantDashboard] Auth context not available:', error);
-    // Provide fallback during hot reload or development issues
-    auth = {
-      user: null,
-      loading: true,
-      signUp: async () => ({ error: 'Auth not available' }),
-      signIn: async () => ({ error: 'Auth not available' }),
-      signOut: async () => {},
-    };
-  }
+  const { user, loading, session } = useAuth();
 
   const [currentView, setCurrentView] = useState('builder');
   const [store, setStore] = useState<Store | null>(null);
   const [products] = useState<Product[]>([]); // TODO: integrate with ProductsManager
-
-  // Handle cases where auth might not be fully loaded yet
-  const { user, loading, session } = auth || { user: null, loading: true, session: null };
 
   useEffect(() => {
     console.log('[MerchantDashboard] useEffect: user:', user, 'loading:', loading);
@@ -65,167 +48,99 @@ export function MerchantDashboard() {
     try {
       console.log('Starting loadStore, user:', user);
       
-      // Try multiple ways to get the auth session
-      let token = null;
+      // Try to load store from Supabase first
+      const { StoreService } = await import('../utils/supabase/stores');
+      const userStores = await StoreService.getUserStores();
       
-      // Method 1: Try getting from auth context (if available)
-      if (session?.access_token) {
-        token = session.access_token;
-        console.log('Got token from auth context session');
-      }
-      
-      // Method 2: Try localStorage with different possible keys
-      if (!token) {
-        const possibleKeys = [
-          'supabase.auth.token',
-          'sb-auth-token',
-          'supabase-auth-token'
-        ];
-        
-        for (const key of possibleKeys) {
-          try {
-            const stored = localStorage.getItem(key);
-            if (stored) {
-              const parsed = JSON.parse(stored);
-              if (parsed?.access_token) {
-                token = parsed.access_token;
-                console.log(`Got token from localStorage key ${key}`);
-                break;
-              }
-            }
-          } catch (e) {
-            // Continue to next key
-          }
-        }
-      }
-      
-      // Method 3: Try to get fresh session from Supabase
-      if (!token && typeof window !== 'undefined') {
-        try {
-          // Import supabase client here to avoid circular dependencies
-          const { supabase } = await import('../utils/supabase/client');
-          const { data: { session: freshSession } } = await supabase.auth.getSession();
-          if (freshSession?.access_token) {
-            token = freshSession.access_token;
-            console.log('Got fresh token from Supabase');
-          }
-        } catch (e) {
-          console.log('Could not get fresh session:', e);
-        }
-      }
-
-      if (!token) {
-        console.log('No token found, creating demo store');
-        createDefaultStore();
-        return;
-      }
-
-      console.log('Making API request with token');
-      
-      // Add a timeout to the API call
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-      
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-8a855376/merchant/store`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        signal: controller.signal,
-      });
-      
-      clearTimeout(timeoutId);
-
-      console.log('API response status:', response.status);
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Store data received:', data);
-        setStore(data.store);
-        toast.success('Store loaded successfully!');
-      } else if (response.status === 404) {
-        console.log('Store not found, creating default store');
-        // Merchant doesn't have a store yet - create a default one for demo
-        createDefaultStore();
+      if (userStores.length > 0) {
+        // Convert Supabase store to app Store format
+        const dbStore = userStores[0];
+        const appStore: Store = {
+          id: dbStore.id,
+          name: dbStore.name,
+          subdomain: dbStore.slug,
+          ownerId: dbStore.user_id,
+          settings: {
+            primaryColor: dbStore.theme_color || '#030213',
+            logoUrl: dbStore.logo_url || '',
+            description: dbStore.description || '',
+            contactEmail: user?.email || '',
+            currency: 'USD',
+            heroButtonText: 'Shop Now',
+            heroSubtext1: 'Free Shipping',
+            heroSubtext2: '30-Day Returns',
+            heroImage: '',
+            heroBadge1: 'New',
+            heroBadge2: '50% Off',
+            collections: [],
+          },
+          createdAt: dbStore.created_at,
+          published: dbStore.is_active,
+        };
+        setStore(appStore);
+        console.log('Store loaded from Supabase:', appStore);
       } else {
-        const errorText = await response.text();
-        console.log('API error:', errorText);
-        throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+        console.log('No stores found, creating default store');
+        createDefaultStore();
       }
     } catch (error) {
       console.error('Failed to load store:', error);
-      // Create a default store for demo purposes
       createDefaultStore();
     }
   };
 
-  const createStoreInSupabase = async (store: Store) => {
+  const createDefaultStore = async () => {
     try {
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-8a855376/stores`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${publicAnonKey}`,
-        },
-        body: JSON.stringify(store),
+      if (!user) {
+        console.error('Cannot create store: no user');
+        return;
+      }
+
+      const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'demo';
+      const cleanName = userName.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const timestamp = Date.now().toString().slice(-4);
+      const slug = `${cleanName}${timestamp}`;
+
+      // Create store in Supabase
+      const { StoreService } = await import('../utils/supabase/stores');
+      const dbStore = await StoreService.createStore({
+        name: user.user_metadata?.full_name ? `${user.user_metadata.full_name}'s Store` : 'My Store',
+        slug: slug,
+        description: 'Welcome to my online store',
+        theme_color: '#030213',
       });
 
-      if (response.ok) {
-        console.log('Store created in Supabase successfully');
-      } else {
-        const errorData = await response.json();
-        console.warn('Failed to create store in Supabase:', errorData);
-      }
+      // Convert to app Store format
+      const appStore: Store = {
+        id: dbStore.id,
+        name: dbStore.name,
+        subdomain: dbStore.slug,
+        ownerId: dbStore.user_id,
+        settings: {
+          primaryColor: dbStore.theme_color || '#030213',
+          logoUrl: dbStore.logo_url || '',
+          description: dbStore.description || '',
+          contactEmail: user.email || '',
+          currency: 'USD',
+          heroButtonText: 'Shop Now',
+          heroSubtext1: 'Free Shipping',
+          heroSubtext2: '30-Day Returns',
+          heroImage: '',
+          heroBadge1: 'New',
+          heroBadge2: '50% Off',
+          collections: [],
+        },
+        createdAt: dbStore.created_at,
+        published: dbStore.is_active,
+      };
+
+      setStore(appStore);
+      console.log('Created new store in Supabase:', appStore);
+      toast.success('Welcome to your new store dashboard!');
     } catch (error) {
-      console.error('Error creating store in Supabase:', error);
+      console.error('Failed to create store:', error);
+      toast.error('Failed to create store. Please try again.');
     }
-  };
-
-  const createDefaultStore = () => {
-    // Check if we already have a stored demo store
-    const existingStoreKey = `demo-store-${user?.id || 'demo-user'}`;
-    const existingStore = localStorage.getItem(existingStoreKey);
-
-    if (existingStore) {
-      try {
-        const parsedStore = JSON.parse(existingStore);
-        setStore(parsedStore);
-        console.log('Loaded existing demo store from localStorage');
-        return;
-      } catch (e) {
-        console.log('Failed to parse existing store, creating new one');
-      }
-    }
-
-    // Create a new demo store by copying the Storefront.tsx template
-    const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'demo';
-    const cleanName = userName.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const timestamp = Date.now().toString().slice(-4); // Last 4 digits for uniqueness
-
-    const defaultStore: Store = {
-      id: `demo-store-${user?.id || 'demo-user'}`,
-      name: user?.user_metadata?.full_name ? `${user.user_metadata.full_name}'s Store` : 'My Store',
-      subdomain: `${cleanName}${timestamp}`, // e.g., "johnsmith1234"
-      ownerId: user?.id || 'demo-user',
-      settings: {
-        ...storefrontTemplate.settings, // Copy settings from Storefront.tsx template
-        contactEmail: user?.email || 'demo@example.com',
-      },
-      createdAt: new Date().toISOString(),
-    };
-
-    // Save to localStorage for persistence
-    localStorage.setItem(existingStoreKey, JSON.stringify(defaultStore));
-    
-    // Also create the store in Supabase
-    createStoreInSupabase(defaultStore);
-    
-    setStore(defaultStore);
-
-    console.log('Created new demo store:', defaultStore);
-    toast.success('Welcome to your new store dashboard!', {
-      description: `Your store is available at: ${defaultStore.subdomain}.localhost:${window.location.port || '3005'}`,
-      duration: 5000,
-    });
   };
 
   const loadDemoStore = () => {

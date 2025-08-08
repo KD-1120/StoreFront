@@ -3,29 +3,26 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { MerchantSignupDialog } from './MerchantSignupDialog';
+import { useAuth } from '../contexts/AuthContext';
 import { Check, Store, Zap, BarChart3, Globe, CreditCard, Shield } from 'lucide-react';
 
 export function LandingPage() {
+  const { user, loading } = useAuth();
   const [isSignupOpen, setIsSignupOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const testBackend = async () => {
-    try {
-      const response = await fetch(`https://${window.location.hostname === 'localhost' ? 'localhost:54321' : 'tlemburwfooejvxqrxgo.supabase.co'}/functions/v1/make-server-8a855376/test`, {
-        headers: {
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRsZW1idXJ3Zm9vZWp2eHFyeGdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzMzY0MTIsImV4cCI6MjA2OTkxMjQxMn0.0egPF5R0JcThem5Fd8m_DzQ2trBvXHtpoNVWsbXlnr0`,
-        },
-      });
-      console.log('Backend test response:', response.status, await response.text());
-    } catch (error) {
-      console.error('Backend test failed:', error);
-    }
-  };
 
   const testStorefront = () => {
     window.location.href = '?store=demo';
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -39,18 +36,19 @@ export function LandingPage() {
             </div>
             {/* Desktop nav */}
             <div className="hidden md:flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => window.location.href = '/dashboard'}>
-                Dashboard
-              </Button>
-              <Button variant="outline" onClick={testBackend}>
-                Test API
-              </Button>
+              {user ? (
+                <Button variant="ghost" onClick={() => window.location.href = '/dashboard'}>
+                  Dashboard
+                </Button>
+              ) : null}
               <Button variant="outline" onClick={testStorefront}>
                 Demo Store
               </Button>
-              <Button onClick={() => setIsSignupOpen(true)}>
-                Start Free Trial
-              </Button>
+              {!user ? (
+                <Button onClick={() => setIsSignupOpen(true)}>
+                  Start Free Trial
+                </Button>
+              ) : null}
             </div>
             {/* Mobile burger */}
             <button
@@ -77,18 +75,19 @@ export function LandingPage() {
               </svg>
             </button>
             <nav className="flex flex-col gap-6 text-center w-full max-w-xs mx-auto">
-              <Button size="lg" variant="ghost" className="w-full" onClick={() => { window.location.href = '/dashboard'; setMobileMenuOpen(false); }}>
-                Dashboard
-              </Button>
-              <Button size="lg" variant="outline" className="w-full" onClick={() => { testBackend(); setMobileMenuOpen(false); }}>
-                Test API
-              </Button>
+              {user ? (
+                <Button size="lg" variant="ghost" className="w-full" onClick={() => { window.location.href = '/dashboard'; setMobileMenuOpen(false); }}>
+                  Dashboard
+                </Button>
+              ) : null}
               <Button size="lg" variant="outline" className="w-full" onClick={() => { testStorefront(); setMobileMenuOpen(false); }}>
                 Demo Store
               </Button>
-              <Button size="lg" className="w-full" onClick={() => { setIsSignupOpen(true); setMobileMenuOpen(false); }}>
-                Start Free Trial
-              </Button>
+              {!user ? (
+                <Button size="lg" className="w-full" onClick={() => { setIsSignupOpen(true); setMobileMenuOpen(false); }}>
+                  Start Free Trial
+                </Button>
+              ) : null}
             </nav>
           </div>
         )}
@@ -108,13 +107,23 @@ export function LandingPage() {
               No coding required, fully customizable, and ready to sell.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button 
-                size="lg" 
-                onClick={() => setIsSignupOpen(true)}
-                className="px-8 py-3 text-lg shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200"
-              >
-                Start Free Trial
-              </Button>
+              {!user ? (
+                <Button 
+                  size="lg" 
+                  onClick={() => setIsSignupOpen(true)}
+                  className="px-8 py-3 text-lg shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200"
+                >
+                  Start Free Trial
+                </Button>
+              ) : (
+                <Button 
+                  size="lg" 
+                  onClick={() => window.location.href = '/dashboard'}
+                  className="px-8 py-3 text-lg shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200"
+                >
+                  Go to Dashboard
+                </Button>
+              )}
               <Button 
                 variant="outline" 
                 size="lg"
@@ -124,9 +133,11 @@ export function LandingPage() {
                 View Demo
               </Button>
             </div>
-            <div className="mt-8 text-sm text-muted-foreground">
-              14-day free trial • No credit card required • Cancel anytime
-            </div>
+            {!user && (
+              <div className="mt-8 text-sm text-muted-foreground">
+                14-day free trial • No credit card required • Cancel anytime
+              </div>
+            )}
           </div>
         </div>
       </section>

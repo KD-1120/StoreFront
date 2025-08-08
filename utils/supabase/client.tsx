@@ -31,20 +31,31 @@ export const uploadImage = async (
   const fileExt = file.name.split('.').pop();
   const fileName = `${user.id}/${path || Date.now()}.${fileExt}`;
 
-  const { data, error } = await supabase.storage
-    .from(bucket)
-    .upload(fileName, file, {
-      cacheControl: '3600',
-      upsert: true
-    });
+  try {
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
 
-  if (error) throw error;
+    if (error) {
+      // Check if it's a bucket not found error
+      if (error.message?.includes('Bucket not found') || error.message?.includes('404')) {
+        throw new Error(`Storage bucket '${bucket}' not found. Please create the bucket in your Supabase dashboard under Storage > New bucket > '${bucket}' with public access enabled.`);
+      }
+      throw error;
+    }
 
-  const { data: { publicUrl } } = supabase.storage
-    .from(bucket)
-    .getPublicUrl(data.path);
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(data.path);
 
-  return publicUrl;
+    return publicUrl;
+  } catch (error) {
+    console.error('Upload error:', error);
+    throw error;
+  }
 };
 
 // Helper function to delete images

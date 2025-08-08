@@ -70,7 +70,8 @@ export function StoreBuilderPanel({ store, products, onStoreUpdate, onPublish }:
       toast.success('Image uploaded and saved!');
     } catch (error) {
       console.error('Image upload error:', error);
-      toast.error('Failed to upload image');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to upload image';
+      toast.error(errorMessage);
     }
   };
 

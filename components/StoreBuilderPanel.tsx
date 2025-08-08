@@ -33,7 +33,7 @@ export function StoreBuilderPanel({ store, products, onStoreUpdate, onPublish }:
   const handlePublish = async () => {
     setIsPublishing(true);
     try {
-      await StoreService.publishStore(store.id);
+      await StoreService.publishStore(store.id, draft);
       const updatedStore = { ...draft, is_published: true };
       setDraft(updatedStore);
       onStoreUpdate(updatedStore);

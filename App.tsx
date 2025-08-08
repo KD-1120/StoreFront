@@ -70,6 +70,7 @@ export default function App() {
     const mode = getAppMode();
     console.log('App mode detected:', mode);
     console.log('Current URL:', window.location.href);
+    console.log('Hostname:', window.location.hostname);
     console.log('Subdomain:', getSubdomain());
     
     if (mode === 'storefront') {
@@ -96,7 +97,7 @@ export default function App() {
       
       if (!subdomain) {
         console.error('Invalid subdomain format:', rawSubdomain);
-        setError('Invalid subdomain format');
+        console.log('Invalid subdomain, showing landing page');
         setAppMode('landing');
         return;
       }
@@ -133,12 +134,12 @@ export default function App() {
         setAppMode('storefront');
       } else {
         console.log('Store not found for subdomain:', subdomain);
-        setError(`Store not found for subdomain: ${subdomain}`);
+        console.log('No store found, showing landing page');
         setAppMode('landing');
       }
     } catch (error) {
       console.error('Failed to load store:', error);
-      setError('Failed to load store');
+      console.log('Error loading store, showing landing page');
       setAppMode('landing');
     }
   };

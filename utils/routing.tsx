@@ -12,17 +12,24 @@ export function getSubdomain(): string | null {
     return sanitizeSubdomain(storeParam);
   }
   
+  // Skip development environments that aren't actual subdomains
+  if (hostname.includes('localhost') || 
+      hostname.includes('127.0.0.1') || 
+      hostname.includes('.preview') ||
+      hostname.includes('gitpod') ||
+      hostname.includes('codespaces') ||
+      hostname.includes('bolt.new') ||
+      hostname.includes('stackblitz') ||
+      !hostname.includes('.')) {
+    return null;
+  }
+  
   // Handle subdomain.localhost format for development
   if (hostname.endsWith('.localhost')) {
     const parts = hostname.split('.');
     if (parts.length >= 2) {
       return sanitizeSubdomain(parts[0]); // Return the subdomain part
     }
-  }
-  
-  // Skip plain localhost and IP addresses
-  if (hostname === 'localhost' || hostname.startsWith('127.0.0.1') || !hostname.includes('.')) {
-    return null;
   }
   
   const parts = hostname.split('.');

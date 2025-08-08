@@ -17,6 +17,18 @@ interface StorefrontProps {
 }
 
 export function Storefront({ store, products: productsProp, isEditable = false, onImageUpload }: StorefrontProps) {
+  // Defensive: If store or store.settings is missing, show fallback UI
+  if (!store || !store.settings) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="text-2xl font-semibold mb-2">Store not found</div>
+          <div className="text-muted-foreground">This store is unavailable or not configured properly.</div>
+        </div>
+      </div>
+    );
+  }
+
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -181,10 +193,10 @@ export function Storefront({ store, products: productsProp, isEditable = false, 
 
   // Apply store branding
   useEffect(() => {
-    if (store.settings.primaryColor) {
+    if (store.settings && store.settings.primaryColor) {
       document.documentElement.style.setProperty('--primary', store.settings.primaryColor);
     }
-  }, [store.settings.primaryColor]);
+  }, [store.settings?.primaryColor]);
 
   if (loading) {
     return (

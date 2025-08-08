@@ -1,3 +1,4 @@
+import { AuthDialog } from './AuthDialog';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { DashboardHeader } from './DashboardHeader';
@@ -23,11 +24,13 @@ const storefrontTemplate = {
 };
 
 export function MerchantDashboard() {
+  console.log('[MerchantDashboard] Mounting');
   let auth;
   try {
     auth = useAuth();
+    console.log('[MerchantDashboard] useAuth() result:', auth);
   } catch (error) {
-    console.warn('Auth context not available:', error);
+    console.warn('[MerchantDashboard] Auth context not available:', error);
     // Provide fallback during hot reload or development issues
     auth = {
       user: null,
@@ -46,11 +49,12 @@ export function MerchantDashboard() {
   const { user, loading, session } = auth || { user: null, loading: true, session: null };
 
   useEffect(() => {
+    console.log('[MerchantDashboard] useEffect: user:', user, 'loading:', loading);
     if (user && !loading) {
-      console.log('User is logged in, loading store...');
+      console.log('[MerchantDashboard] User is logged in, loading store...');
       loadStore();
     } else if (!user && !loading) {
-      console.log('No user found, showing auth dialog');
+      console.log('[MerchantDashboard] No user found, showing demo dashboard');
     }
   }, [user, loading]);
 
@@ -243,35 +247,27 @@ export function MerchantDashboard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading dashboard...</p>
-        </div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
       </div>
     );
   }
 
-  if (!user) {
-    const demoStore = loadDemoStore();
+  if (!user && !loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <DashboardHeader store={demoStore} user={null} className="sticky top-0 z-10" />
-        <div className="flex">
-          <DashboardSidebar currentView={currentView} onViewChange={setCurrentView} />
-          <main className="flex-1 p-6">
-            <DashboardOverview store={demoStore} />
-          </main>
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <AuthDialog isOpen={true} onClose={() => {}} />
       </div>
     );
   }
 
   if (!store) {
+    console.log('[MerchantDashboard] No store loaded for user:', user);
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Loading store...</p>
+          <div className="text-xs text-muted-foreground mt-2">(Waiting for store data... user: {JSON.stringify(user)})</div>
         </div>
       </div>
     );

@@ -63,7 +63,7 @@ type DbStore = Database['public']['Tables']['stores']['Row'];
 
 export default function App() {
   const [appMode, setAppMode] = useState<'landing' | 'dashboard' | 'storefront' | 'loading'>('loading');
-  const [store, setStore] = useState<DbStore | null>(null);
+  const [store, setStore] = useState<Store | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -72,11 +72,11 @@ export default function App() {
     console.log('Current URL:', window.location.href);
     console.log('Hostname:', window.location.hostname);
     console.log('Subdomain:', getSubdomain());
-    
     if (mode === 'storefront') {
       loadStoreFromSubdomain();
     } else {
       setAppMode(mode);
+      console.log('Set appMode to:', mode);
     }
   }, []);
 
@@ -103,20 +103,41 @@ export default function App() {
       }
 
       // Handle demo store
+
       if (subdomain === 'demo') {
         console.log('Loading demo store');
-        const demoStore: DbStore = {
+        const demoStore: Store = {
           id: 'demo-store',
-          user_id: 'demo-user',
           name: 'Demo Store',
-          slug: 'demo',
-          description: 'A beautiful demo store showcasing our platform',
-          logo_url: null,
-          theme_color: '#030213',
-          domain: null,
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          subdomain: 'demo',
+          ownerId: 'demo-user',
+          settings: {
+            primaryColor: '#030213',
+            logoUrl: '',
+            description: 'A beautiful demo store showcasing our platform',
+            contactEmail: 'demo@storefront.com',
+            currency: 'USD',
+            heroButtonText: 'Shop Now',
+            heroSubtext1: 'Free Shipping',
+            heroSubtext2: '30-Day Returns',
+            heroImage: '',
+            heroBadge1: 'New',
+            heroBadge2: '50% Off',
+            collections: [{ id: '1', name: 'Featured' }],
+          },
+          createdAt: new Date().toISOString(),
+          published: true,
+          products: [
+            {
+              id: 1,
+              name: 'Demo Product',
+              description: 'This is a demo product.',
+              price: 29.99,
+              image: '',
+              category: 'Featured',
+            },
+          ],
+          categories: ['Featured'],
         };
         setStore(demoStore);
         setAppMode('storefront');
@@ -173,7 +194,21 @@ export default function App() {
               </div>
             </div>
           )}
-          {appMode === 'dashboard' && <MerchantDashboard />}
+          {appMode === 'dashboard' && (
+            <>
+              {console.log('Rendering MerchantDashboard (appMode === "dashboard")')}
+              <MerchantDashboard />
+            </>
+          )}
+          {/* Fallback UI for dashboard mode if MerchantDashboard fails to render */}
+          {appMode === 'dashboard' && typeof MerchantDashboard !== 'function' && (
+            <div className="min-h-screen flex items-center justify-center bg-background">
+              <div className="text-center">
+                <div className="text-2xl font-semibold mb-2">Dashboard failed to load</div>
+                <div className="text-muted-foreground">Please check authentication and component export.</div>
+              </div>
+            </div>
+          )}
           {appMode === 'storefront' && store && (
             <Storefront store={store} />
           )}

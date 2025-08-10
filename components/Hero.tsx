@@ -3,7 +3,7 @@ import { ImageWithFallback } from './figma/ImageWithFallback';
 import { Button } from './ui/button';
 import { Loader2, Upload } from 'lucide-react';
 
-export function Hero({ storeName, storeDescription, heroButtonText, heroSubtext1, heroSubtext2, heroImage, heroBadge1, heroBadge2, isEditable = false, onImageUpload }: {
+export function Hero({ storeName, storeDescription, heroButtonText, heroSubtext1, heroSubtext2, heroImage, heroBadge1, heroBadge2, isEditable = false, onImageUpload, uploadingImages, onTextChange }: {
   storeName?: string;
   storeDescription?: string;
   heroButtonText?: string;
@@ -14,7 +14,9 @@ export function Hero({ storeName, storeDescription, heroButtonText, heroSubtext1
   heroBadge2?: string;
   isEditable?: boolean;
   onImageUpload?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  uploadingImages?: Set<string>;
   onTextChange?: (field: string, value: string) => void;
+}) {
   const [editableStoreName, setEditableStoreName] = useState(storeName || 'Summer 2024');
   const [editableDescription, setEditableDescription] = useState(storeDescription || 'Discover the latest trends in fashion with our curated collection of premium apparel. Quality meets style in every piece.');
   const [editableHeroButtonText, setEditableHeroButtonText] = useState(heroButtonText || 'Shop Now');

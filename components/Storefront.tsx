@@ -18,7 +18,7 @@ interface StorefrontProps {
   uploadingImages?: Set<string>;
 }
 
-export function Storefront({ store, products: productsProp, isEditable = false, onImageUpload, onTextChange }: StorefrontProps) {
+export function Storefront({ store, products: productsProp, isEditable = false, onImageUpload, onTextChange, uploadingImages }: StorefrontProps) {
   // Defensive: If store or store.settings is missing, show fallback UI
   if (!store || !store.settings) {
     return (

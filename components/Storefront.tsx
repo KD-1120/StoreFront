@@ -13,7 +13,9 @@ interface StorefrontProps {
   store: Store;
   products?: Product[];
   isEditable?: boolean;
-  onImageUpload?: (field: keyof Store['settings']) => (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onImageUpload?: (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onTextChange?: (field: string, value: string) => void;
+  uploadingImages?: Set<string>;
 }
 
 export function Storefront({ store, products: productsProp, isEditable = false, onImageUpload }: StorefrontProps) {
@@ -217,6 +219,7 @@ export function Storefront({ store, products: productsProp, isEditable = false, 
         onAuthClick={() => {}} // No auth for customers
         user={null}
         storeName={store.name}
+        onStoreNameChange={onTextChange ? (name) => onTextChange('name', name) : undefined}
         isStorefront={true}
         isEditable={isEditable}
       />
@@ -232,6 +235,8 @@ export function Storefront({ store, products: productsProp, isEditable = false, 
           heroBadge2={store.settings.heroBadge2}
           isEditable={isEditable}
           onImageUpload={onImageUpload ? onImageUpload('heroImage') : undefined}
+          onTextChange={onTextChange}
+          uploadingImages={uploadingImages}
         />
         <StorefrontProductGrid products={products} onAddToCart={addToCart} />
       </main>

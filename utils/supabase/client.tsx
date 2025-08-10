@@ -36,12 +36,22 @@ export const uploadImage = async (
       .from(bucket)
       .upload(fileName, file, {
         cacheControl: '3600',
+        upsert: true,
+        contentType: file.type
+      });
+
+        cacheControl: '3600',
         upsert: true
       });
 
     if (error) {
       // Check if it's a bucket not found error
       if (error.message?.includes('Bucket not found') || error.message?.includes('404')) {
+        throw new Error(`Storage bucket '${bucket}' not found. Please create the bucket in your Supabase dashboard under Storage > New bucket > '${bucket}' with public access enabled.`);
+      }
+      // Check for file size errors
+      if (error.message?.includes('file size')) {
+        throw new Error('File size too large. Please choose a smaller image.');
         throw new Error(`Storage bucket '${bucket}' not found. Please create the bucket in your Supabase dashboard under Storage > New bucket > '${bucket}' with public access enabled.`);
       }
       throw error;

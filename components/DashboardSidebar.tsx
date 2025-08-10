@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from './ui/button';
 import { cn } from './ui/utils';
-import { BarChart3, Package, ShoppingCart, Settings, Home } from 'lucide-react';
+import { BarChart3, Package, ShoppingCart, Settings, Home, User } from 'lucide-react';
 
 interface DashboardSidebarProps {
   currentView: string;
@@ -28,6 +28,11 @@ const sidebarItems = [
 		id: 'orders',
 		label: 'Orders',
 		icon: ShoppingCart,
+	},
+	{
+		id: 'profile',
+		label: 'Profile',
+		icon: User,
 	},
 	{
 		id: 'settings',

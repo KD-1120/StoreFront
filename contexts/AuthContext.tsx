@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../utils/supabase/client';
+import { ProfileService } from '../utils/supabase/profiles';
 import { Database } from '../utils/supabase/types';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -32,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // Load profile asynchronously but don't block setting loading to false
         if (session?.user) {
-          loadProfile(session.user.id).catch(err => {
+          loadProfile(session.user.id, session.user).catch(err => {
             console.error('[AuthProvider] Initial profile loading failed:', err);
           });
         }
@@ -52,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // Load profile asynchronously but don't block setting loading to false
         if (session?.user) {
-          loadProfile(session.user.id).catch(err => {
+          loadProfile(session.user.id, session.user).catch(err => {
             console.error('[AuthProvider] Profile loading failed:', err);
           });
         } else {
@@ -66,37 +67,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const loadProfile = async (userId: string) => {
+  const loadProfile = async (userId: string, userData?: User) => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-
-      if (error && error.code === 'PGRST116') {
-        // Profile doesn't exist, create one
-        const { data: userData } = await supabase.auth.getUser();
-        if (userData.user) {
-          const newProfile = {
-            user_id: userId,
-            full_name: userData.user.user_metadata?.full_name || userData.user.user_metadata?.name || null,
-            email: userData.user.email || null,
-          };
-
-          const { data: createdProfile, error: createError } = await supabase
-            .from('profiles')
-            .insert(newProfile)
-            .select()
-            .single();
-
-          if (!createError) {
-            setProfile(createdProfile);
-          }
-        }
-      } else if (!error) {
-        setProfile(data);
-      }
+      const profile = await ProfileService.getOrCreateProfile(userId, userData);
+      setProfile(profile);
     } catch (error) {
       console.error('Error loading profile:', error);
     }
@@ -159,15 +133,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const updateProfile = async (updates: Partial<Profile>) => {
     if (!user) throw new Error('No user logged in');
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .update(updates)
-      .eq('user_id', user.id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    setProfile(data);
+    const updatedProfile = await ProfileService.updateProfile(user.id, updates);
+    setProfile(updatedProfile);
   };
 
   return (

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { Button } from './ui/button';
+import { Loader2, Upload } from 'lucide-react';
 
 export function Hero({ storeName, storeDescription, heroButtonText, heroSubtext1, heroSubtext2, heroImage, heroBadge1, heroBadge2, isEditable = false, onImageUpload }: {
   storeName?: string;
@@ -13,6 +14,8 @@ export function Hero({ storeName, storeDescription, heroButtonText, heroSubtext1
   heroBadge2?: string;
   isEditable?: boolean;
   onImageUpload?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onTextChange?: (field: string, value: string) => void;
+  uploadingImages?: Set<string>;
 } = {}) {
   const [editableStoreName, setEditableStoreName] = useState(storeName || 'Summer 2024');
   const [editableDescription, setEditableDescription] = useState(storeDescription || 'Discover the latest trends in fashion with our curated collection of premium apparel. Quality meets style in every piece.');
@@ -22,6 +25,7 @@ export function Hero({ storeName, storeDescription, heroButtonText, heroSubtext1
   const [editableHeroBadge1, setEditableHeroBadge1] = useState(heroBadge1 || 'New');
   const [editableHeroBadge2, setEditableHeroBadge2] = useState(heroBadge2 || '50% Off');
   const [uploadedHeroImage, setUploadedHeroImage] = useState(heroImage || 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80');
+  const isUploadingHeroImage = uploadingImages?.has('heroImage');
 
   useEffect(() => {
     setUploadedHeroImage(heroImage || 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80');
@@ -29,19 +33,24 @@ export function Hero({ storeName, storeDescription, heroButtonText, heroSubtext1
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = () => {
-        const imageData = reader.result as string;
-        setUploadedHeroImage(imageData);
-      };
-      reader.readAsDataURL(file);
-      
-      // Call parent upload handler for actual upload
       if (onImageUpload) {
         onImageUpload(e);
       }
     }
+  };
+
+  const handleTextChange = (field: string, value: string) => {
+    // Update local state
+    switch (field) {
+      case 'heroButtonText':
+        setEditableHeroButtonText(value);
+        break;
+      case 'heroSubtext1':
+        setEditableHeroSubtext1(value);
+        break;
+    }
+    // Notify parent
+    onTextChange?.(field, value);
   };
 
   return (
@@ -52,7 +61,7 @@ export function Hero({ storeName, storeDescription, heroButtonText, heroSubtext1
             <h1
               contentEditable={isEditable}
               suppressContentEditableWarning
-              onBlur={(e) => setEditableStoreName(e.target.textContent || '')}
+              onBlur={(e) => handleTextChange('storeName', e.target.textContent || '')}
               className="text-4xl md:text-5xl lg:text-6xl tracking-tight"
             >
               Welcome to <span className="block text-primary">{editableStoreName}</span>
@@ -60,7 +69,7 @@ export function Hero({ storeName, storeDescription, heroButtonText, heroSubtext1
             <p
               contentEditable={isEditable}
               suppressContentEditableWarning
-              onBlur={(e) => setEditableDescription(e.target.textContent || '')}
+              onBlur={(e) => handleTextChange('storeDescription', e.target.textContent || '')}
               className="text-lg text-muted-foreground max-w-md"
             >
               {editableDescription}
@@ -70,7 +79,7 @@ export function Hero({ storeName, storeDescription, heroButtonText, heroSubtext1
                 <span
                   contentEditable={isEditable}
                   suppressContentEditableWarning
-                  onBlur={(e) => setEditableHeroButtonText(e.target.textContent || '')}
+                  onBlur={(e) => handleTextChange('heroButtonText', e.target.textContent || '')}
                 >
                   {editableHeroButtonText}
                 </span>
@@ -85,7 +94,7 @@ export function Hero({ storeName, storeDescription, heroButtonText, heroSubtext1
                 <span
                   contentEditable={isEditable}
                   suppressContentEditableWarning
-                  onBlur={(e) => setEditableHeroSubtext1(e.target.textContent || '')}
+                  onBlur={(e) => handleTextChange('heroSubtext1', e.target.textContent || '')}
                 >
                   {editableHeroSubtext1}
                 </span>
@@ -95,7 +104,7 @@ export function Hero({ storeName, storeDescription, heroButtonText, heroSubtext1
                 <span
                   contentEditable={isEditable}
                   suppressContentEditableWarning
-                  onBlur={(e) => setEditableHeroSubtext2(e.target.textContent || '')}
+                  onBlur={(e) => handleTextChange('heroSubtext2', e.target.textContent || '')}
                 >
                   {editableHeroSubtext2}
                 </span>
@@ -104,6 +113,14 @@ export function Hero({ storeName, storeDescription, heroButtonText, heroSubtext1
           </div>
           <div className="relative">
             <div className="aspect-square relative overflow-hidden rounded-2xl">
+              {isUploadingHeroImage && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
+                  <div className="bg-white rounded-lg p-4 flex items-center gap-3">
+                    <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                    <span className="text-sm font-medium">Uploading image...</span>
+                  </div>
+                </div>
+              )}
               <ImageWithFallback
                 src={uploadedHeroImage}
                 fallbackSrc="https://via.placeholder.com/150"
@@ -111,12 +128,19 @@ export function Hero({ storeName, storeDescription, heroButtonText, heroSubtext1
                 className="w-full h-full object-cover"
               />
               {isEditable && (
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="absolute top-2 left-2 bg-white p-1 rounded text-xs shadow-md focus:outline-none"
-                />
+                <div className="absolute top-4 left-4">
+                  <label className="bg-white hover:bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium cursor-pointer shadow-md transition-colors flex items-center gap-2">
+                    <Upload className="w-4 h-4" />
+                    Change Image
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      disabled={isUploadingHeroImage}
+                    />
+                  </label>
+                </div>
               )}
             </div>
             {/* Floating badges */}
@@ -124,7 +148,7 @@ export function Hero({ storeName, storeDescription, heroButtonText, heroSubtext1
               <span
                 contentEditable={isEditable}
                 suppressContentEditableWarning
-                onBlur={(e) => setEditableHeroBadge1(e.target.textContent || '')}
+                onBlur={(e) => handleTextChange('heroBadge1', e.target.textContent || '')}
                 className="text-sm"
               >
                 {editableHeroBadge1}
@@ -134,7 +158,7 @@ export function Hero({ storeName, storeDescription, heroButtonText, heroSubtext1
               <span
                 contentEditable={isEditable}
                 suppressContentEditableWarning
-                onBlur={(e) => setEditableHeroBadge2(e.target.textContent || '')}
+                onBlur={(e) => handleTextChange('heroBadge2', e.target.textContent || '')}
                 className="text-sm"
               >
                 {editableHeroBadge2}

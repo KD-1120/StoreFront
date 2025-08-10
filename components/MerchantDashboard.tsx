@@ -8,6 +8,7 @@ import { OrdersManager } from './OrdersManager';
 import { StoreSettings } from './StoreSettings';
 import { DashboardOverview } from './DashboardOverview';
 import { Store, Product } from '../App';
+import { UserProfile } from './UserProfile';
 import { StoreBuilderPanel } from './StoreBuilderPanel';
 import { StoreService, dbStoreToAppStore } from '../utils/supabase/stores';
 import { toast } from 'sonner';
@@ -118,6 +119,8 @@ export function MerchantDashboard() {
         return <ProductsManager store={store} />;
       case 'orders':
         return <OrdersManager store={store} />;
+      case 'profile':
+        return <UserProfile />;
       case 'settings':
         return <StoreSettings store={store} onStoreUpdate={setStore} />;
       default:

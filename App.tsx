@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AuthProvider } from './contexts/AuthContext';
+import { LoadingSpinner, FullPageLoader } from './components/LoadingSpinner';
 import { MerchantDashboard } from './components/MerchantDashboard';
 import { Storefront } from './components/Storefront';
 import { LandingPage } from './components/LandingPage';
@@ -189,12 +190,7 @@ export default function App() {
       <AuthProvider>
         <div className="min-h-screen bg-background">
           {appMode === 'loading' && (
-            <div className="min-h-screen bg-background flex items-center justify-center">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-muted-foreground">Loading...</p>
-              </div>
-            </div>
+            <FullPageLoader text="Loading your store..." />
           )}
           {appMode === 'dashboard' && (
             <>

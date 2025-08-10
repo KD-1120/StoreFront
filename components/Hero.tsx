@@ -15,8 +15,6 @@ export function Hero({ storeName, storeDescription, heroButtonText, heroSubtext1
   isEditable?: boolean;
   onImageUpload?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onTextChange?: (field: string, value: string) => void;
-  uploadingImages?: Set<string>;
-} = {}) {
   const [editableStoreName, setEditableStoreName] = useState(storeName || 'Summer 2024');
   const [editableDescription, setEditableDescription] = useState(storeDescription || 'Discover the latest trends in fashion with our curated collection of premium apparel. Quality meets style in every piece.');
   const [editableHeroButtonText, setEditableHeroButtonText] = useState(heroButtonText || 'Shop Now');

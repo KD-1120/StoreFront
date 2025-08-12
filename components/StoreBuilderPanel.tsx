@@ -4,7 +4,7 @@ import { Button } from './ui/button';
 import { toast } from 'sonner';
 import { StoreService } from '../utils/supabase/stores';
 import { uploadImage } from '../utils/supabase/client';
-import { Loader2, Save, Eye, Upload } from 'lucide-react';
+import { Loader2, Save, Eye } from 'lucide-react';
 
 interface StoreBuilderPanelProps {
   store: any;

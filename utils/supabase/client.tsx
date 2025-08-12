@@ -1,9 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { Database } from './types';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://tlemburwfooejvxqrxgo.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRsZW1idXJ3Zm9vZWp2eHFyeGdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzMzY0MTIsImV4cCI6MjA2OTkxMjQxMn0.0egPF5R0JcThem5Fd8m_DzQ2trBvXHtpoNVWsbXlnr0';
-
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://qudatjeaebentuiywftz.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'YOUR_NEW_SUPABASE_ANON_KEY';
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,

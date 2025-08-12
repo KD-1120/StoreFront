@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { AuthProvider } from './contexts/AuthContext';
-import { LoadingSpinner, FullPageLoader } from './components/LoadingSpinner';
+import { FullPageLoader } from './components/LoadingSpinner';
 import { MerchantDashboard } from './components/MerchantDashboard';
 import { Storefront } from './components/Storefront';
 import { LandingPage } from './components/LandingPage';
@@ -8,7 +8,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { getSubdomain, getAppMode, sanitizeSubdomain } from './utils/routing';
 import { StoreService, dbStoreToAppStore } from './utils/supabase/stores';
 import { Toaster } from 'sonner';
-import { Database } from './utils/supabase/types';
+// import { Database } from './utils/supabase/types';
 
 export interface Product {
   id: string;
@@ -60,12 +60,12 @@ export interface Store {
   categories?: string[];
 }
 
-type DbStore = Database['public']['Tables']['stores']['Row'];
+// type DbStore = Database['public']['Tables']['stores']['Row'];
 
 export default function App() {
   const [appMode, setAppMode] = useState<'landing' | 'dashboard' | 'storefront' | 'loading'>('loading');
   const [store, setStore] = useState<Store | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error] = useState<string | null>(null);
 
   useEffect(() => {
     const mode = getAppMode();

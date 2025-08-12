@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
 import { Loader2, Save, ExternalLink } from 'lucide-react';
 import { generateStoreUrl } from '../utils/routing';
-import { projectId } from '../utils/supabase/info';
+import { supabaseFunctionsBaseUrl } from '../utils/supabase/info';
 
 interface StoreSettingsProps {
   store: any;
@@ -53,7 +53,7 @@ export function StoreSettings({ store, onStoreUpdate }: StoreSettingsProps) {
 
       if (token) {
         try {
-          const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-8a855376/merchant/store`, {
+          const response = await fetch(`${supabaseFunctionsBaseUrl}/make-server-8a855376/merchant/store`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',

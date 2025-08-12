@@ -66,7 +66,7 @@ export function MerchantSignupDialog({ isOpen, onClose }: MerchantSignupDialogPr
       const result = await signUp(formData.email, formData.password, formData.name);
       
       if (result.error) {
-        if (result.requiresEmailConfirmation) {
+  if ('requiresEmailConfirmation' in result && (result as any).requiresEmailConfirmation) {
           setError(result.error);
           // Don't create store yet, wait for email confirmation
         } else {

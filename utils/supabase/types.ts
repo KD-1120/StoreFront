@@ -173,7 +173,6 @@ export interface Database {
           total_amount: number
           status: string
           shipping_address: Json | null
-          payment_id: string | null
           custom_fields: Json | null
           payment_id: string | null
           created_at: string
@@ -188,7 +187,6 @@ export interface Database {
           total_amount: number
           status?: string
           shipping_address?: Json | null
-          payment_id?: string | null
           custom_fields?: Json | null
           payment_id?: string | null
           created_at?: string
@@ -203,7 +201,6 @@ export interface Database {
           total_amount?: number
           status?: string
           shipping_address?: Json | null
-          payment_id?: string | null
           custom_fields?: Json | null
           payment_id?: string | null
           created_at?: string
@@ -234,6 +231,246 @@ export interface Database {
           quantity?: number
           price?: number
           created_at?: string
+        }
+      }
+      invoices: {
+        Row: {
+          id: string
+          store_id: string
+          user_id: string | null
+          amount: number
+          status: string
+          due_date: string | null
+          metadata: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          store_id: string
+          user_id?: string | null
+          amount: number
+          status?: string
+          due_date?: string | null
+          metadata?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          store_id?: string
+          user_id?: string | null
+          amount?: number
+          status?: string
+          due_date?: string | null
+          metadata?: Json | null
+          created_at?: string
+        }
+      }
+      payout_methods: {
+        Row: {
+          id: string
+          user_id: string
+          type: string
+          details: Json
+          is_default: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          type: string
+          details: Json
+          is_default?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          type?: string
+          details?: Json
+          is_default?: boolean
+          created_at?: string
+        }
+      }
+      payout_requests: {
+        Row: {
+          id: string
+          store_id: string
+          amount: number
+          status: string
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          store_id: string
+          amount: number
+          status?: string
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          store_id?: string
+          amount?: number
+          status?: string
+          notes?: string | null
+          created_at?: string
+        }
+      }
+      platform_settings: {
+        Row: {
+          key: string
+          value: Json
+          is_public: boolean
+          updated_at: string
+        }
+        Insert: {
+          key: string
+          value: Json
+          is_public?: boolean
+          updated_at?: string
+        }
+        Update: {
+          key?: string
+          value?: Json
+          is_public?: boolean
+          updated_at?: string
+        }
+      }
+      subscription_plans: {
+        Row: {
+          id: string
+          name: string
+          price: number
+          interval: string
+          features: Json | null
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          price: number
+          interval?: string
+          features?: Json | null
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          price?: number
+          interval?: string
+          features?: Json | null
+          is_active?: boolean
+          created_at?: string
+        }
+      }
+      subscriptions: {
+        Row: {
+          id: string
+          user_id: string
+          plan_id: string | null
+          status: string
+          current_period_end: string | null
+          metadata: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          plan_id?: string | null
+          status?: string
+          current_period_end?: string | null
+          metadata?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          plan_id?: string | null
+          status?: string
+          current_period_end?: string | null
+          metadata?: Json | null
+          created_at?: string
+        }
+      }
+      transactions: {
+        Row: {
+          id: string
+          store_id: string
+          amount: number
+          type: string
+          status: string
+          metadata: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          store_id: string
+          amount: number
+          type: string
+          status?: string
+          metadata?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          store_id?: string
+          amount?: number
+          type?: string
+          status?: string
+          metadata?: Json | null
+          created_at?: string
+        }
+      }
+      usage_tracking: {
+        Row: {
+          id: string
+          user_id: string
+          event: string
+          properties: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          event: string
+          properties?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          event?: string
+          properties?: Json | null
+          created_at?: string
+        }
+      }
+      wallets: {
+        Row: {
+          id: string
+          store_id: string
+          balance: number
+          currency: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          store_id: string
+          balance?: number
+          currency?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          store_id?: string
+          balance?: number
+          currency?: string
+          created_at?: string
+          updated_at?: string
         }
       }
     }

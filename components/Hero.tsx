@@ -48,6 +48,21 @@ export function Hero({ storeName, storeDescription, heroButtonText, heroSubtext1
       case 'heroSubtext1':
         setEditableHeroSubtext1(value);
         break;
+      case 'heroSubtext2':
+        setEditableHeroSubtext2(value);
+        break;
+      case 'heroBadge1':
+        setEditableHeroBadge1(value);
+        break;
+      case 'heroBadge2':
+        setEditableHeroBadge2(value);
+        break;
+      case 'storeName':
+        setEditableStoreName(value);
+        break;
+      case 'storeDescription':
+        setEditableDescription(value);
+        break;
     }
     // Notify parent
     onTextChange?.(field, value);

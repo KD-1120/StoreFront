@@ -21,7 +21,7 @@ interface CheckoutProps {
   storeId?: string;
 }
 
-export function Checkout({ isOpen, onClose, items, total, onOrderComplete, isStorefront = false, storeId }: CheckoutProps) {
+export function Checkout({ isOpen, onClose, items, total, onOrderComplete, isStorefront: _isStorefront = false, storeId }: CheckoutProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

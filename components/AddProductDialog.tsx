@@ -19,7 +19,7 @@ interface AddProductDialogProps {
   store: any;
 }
 
-export function AddProductDialog({ isOpen, onClose, onProductAdded, storeId, isBuilder, store }: AddProductDialogProps) {
+export function AddProductDialog({ isOpen, onClose, onProductAdded, storeId, isBuilder, store: _store }: AddProductDialogProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -35,7 +35,7 @@ export function AddProductDialog({ isOpen, onClose, onProductAdded, storeId, isB
   const [newCustomField, setNewCustomField] = useState({ key: '', value: '' });
   const [customFields, setCustomFields] = useState<{ key: string; value: string }[]>([]);
 
-  const collections = store?.settings?.collections || [];
+  // const collections = store?.settings?.collections || [];
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { Button } from './ui/button';
+// import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ShoppingCart, Package, Truck, CheckCircle } from 'lucide-react';
-import { projectId } from '../utils/supabase/info';
+import { supabaseFunctionsBaseUrl } from '../utils/supabase/info';
 
 interface OrdersManagerProps {
-  store: any;
+  store?: any;
 }
 
-export function OrdersManager({ store }: OrdersManagerProps) {
+export function OrdersManager({}: OrdersManagerProps) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -25,7 +25,7 @@ export function OrdersManager({ store }: OrdersManagerProps) {
 
       if (!token) return;
 
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-8a855376/merchant/orders`, {
+  const response = await fetch(`${supabaseFunctionsBaseUrl}/make-server-8a855376/merchant/orders`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
@@ -47,7 +47,7 @@ export function OrdersManager({ store }: OrdersManagerProps) {
 
       if (!token) return;
 
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-8a855376/merchant/orders/${orderId}`, {
+  const response = await fetch(`${supabaseFunctionsBaseUrl}/make-server-8a855376/merchant/orders/${orderId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

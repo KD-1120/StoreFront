@@ -16,7 +16,6 @@ interface HeaderProps {
   isStorefront?: boolean;
   isEditable?: boolean;
   onStoreNameChange?: (newName: string) => void;
-  onStoreNameChange?: (newName: string) => void;
 }
 
 export function Header({ cartItemCount, onCartClick, onAuthClick, user, storeName, isStorefront = false, isEditable = false, onStoreNameChange, collections }: HeaderProps & { collections?: { id: string; name: string }[] }) {

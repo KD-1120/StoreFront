@@ -163,7 +163,7 @@ export class StoreService {
 
   // Check if slug is available
   static async isSlugAvailable(slug: string): Promise<boolean> {
-    const { data, error } = await supabase
+  const { error } = await supabase
       .from('stores')
       .select('id')
       .eq('slug', slug)
@@ -171,6 +171,6 @@ export class StoreService {
 
     if (error && error.code === 'PGRST116') return true; // No rows found
     if (error) throw error;
-    return false; // Slug exists
+  return false; // Slug exists
   }
 }

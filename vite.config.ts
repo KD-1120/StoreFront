@@ -18,5 +18,21 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true,
+    proxy: {
+      // Development-only proxy to Supabase Edge Functions to avoid browser CORS
+      '/sbfunc': {
+        target: (process.env.VITE_SUPABASE_URL || 'https://qudatjeaebentuiywftz.supabase.co') + '/functions/v1',
+        changeOrigin: true,
+        rewrite: (pathStr) => pathStr.replace(/^\/sbfunc/, ''),
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            // Add anon key if provided so requests work without manual headers
+            if (process.env.VITE_SUPABASE_ANON_KEY) {
+              proxyReq.setHeader('Authorization', `Bearer ${process.env.VITE_SUPABASE_ANON_KEY}`)
+            }
+          });
+        }
+      }
+    }
   },
 })

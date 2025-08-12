@@ -1,5 +1,5 @@
 import { CartItem } from '../App';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { supabaseFunctionsBaseUrl } from '../utils/supabase/info';
 
 export class CartService {
   private getAuthToken(): string | null {
@@ -13,7 +13,7 @@ export class CartService {
     if (!token) return; // Don't save if not authenticated
 
     try {
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-8a855376/cart/save`, {
+  const response = await fetch(`${supabaseFunctionsBaseUrl}/make-server-8a855376/cart/save`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -35,7 +35,7 @@ export class CartService {
     if (!token) return [];
 
     try {
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-8a855376/cart/load`, {
+  const response = await fetch(`${supabaseFunctionsBaseUrl}/make-server-8a855376/cart/load`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -60,7 +60,7 @@ export class CartService {
     if (!token) throw new Error('Authentication required');
 
     try {
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-8a855376/orders/create`, {
+  const response = await fetch(`${supabaseFunctionsBaseUrl}/make-server-8a855376/orders/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -86,7 +86,7 @@ export class CartService {
     if (!token) return [];
 
     try {
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-8a855376/orders`, {
+  const response = await fetch(`${supabaseFunctionsBaseUrl}/make-server-8a855376/orders`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

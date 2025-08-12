@@ -1,18 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Plus, Edit, Trash2, Package } from 'lucide-react';
 import { AddProductDialog } from './AddProductDialog';
-import { projectId } from '../utils/supabase/info';
+import { supabaseFunctionsBaseUrl } from '../utils/supabase/info';
 import type { Product } from '../App';
 
 
-interface Collection {
-  id: string;
-  name: string;
-}
+// interface Collection {
+//   id: string;
+//   name: string;
+// }
 
 type ProductWithCollections = Product & { collectionIds?: string[] };
 
@@ -29,8 +28,8 @@ export function ProductsManager({ store, products: productsProp, onProductsChang
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   // Collections state
-  const [collections, setCollections] = useState<Collection[]>(store.settings.collections || []);
-  const [newCollectionName, setNewCollectionName] = useState('');
+  // const [collections, setCollections] = useState<Collection[]>(store.settings.collections || []);
+  // const [newCollectionName, setNewCollectionName] = useState('');
 
   useEffect(() => {
     if (!isBuilder) {
@@ -42,17 +41,17 @@ export function ProductsManager({ store, products: productsProp, onProductsChang
   }, [isBuilder, productsProp]);
 
   // Sync collections to store.settings
-  useEffect(() => {
-    if (isBuilder) return;
-    // Optionally, persist collections to store/settings if needed
-  }, [collections, isBuilder]);
+  // useEffect(() => {
+  //   if (isBuilder) return;
+  //   // Optionally, persist collections to store/settings if needed
+  // }, [collections, isBuilder]);
 
   const loadProducts = async () => {
     try {
       const session = JSON.parse(localStorage.getItem('supabase.auth.token') || 'null');
       const token = session?.access_token;
       if (!token) return;
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-8a855376/merchant/products`, {
+  const response = await fetch(`${supabaseFunctionsBaseUrl}/make-server-8a855376/merchant/products`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (response.ok) {
@@ -91,7 +90,7 @@ export function ProductsManager({ store, products: productsProp, onProductsChang
       const session = JSON.parse(localStorage.getItem('supabase.auth.token') || 'null');
       const token = session?.access_token;
       if (!token) return;
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-8a855376/merchant/products/${productId}`, {
+  const response = await fetch(`${supabaseFunctionsBaseUrl}/make-server-8a855376/merchant/products/${productId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });

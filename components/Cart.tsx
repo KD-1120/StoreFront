@@ -1,4 +1,3 @@
-import React from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';

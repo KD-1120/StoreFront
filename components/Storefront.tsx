@@ -7,7 +7,8 @@ import { Checkout } from './Checkout';
 import { StorefrontProductGrid } from './StorefrontProductGrid';
 import { toast } from 'sonner';
 import { Product, CartItem, Store } from '../App';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { supabaseFunctionsBaseUrl, publicAnonKey } from '../utils/supabase/info';
+const functionsBase = import.meta.env.DEV ? '/sbfunc' : supabaseFunctionsBaseUrl;
 
 interface StorefrontProps {
   store: Store;
@@ -65,11 +66,8 @@ export function Storefront({ store, products: productsProp, isEditable = false, 
 
   const loadProducts = async () => {
     try {
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-8a855376/stores/${store.id}/products`, {
-        headers: {
-          'Authorization': `Bearer ${publicAnonKey}`,
-        },
-      });
+  const headers: HeadersInit = publicAnonKey ? { 'Authorization': `Bearer ${publicAnonKey}` } : {};
+  const response = await fetch(`${functionsBase}/make-server-8a855376/stores/${store.id}/products`, { headers });
 
       if (response.ok) {
         const data = await response.json();
@@ -86,11 +84,8 @@ export function Storefront({ store, products: productsProp, isEditable = false, 
 
   const loadCart = async () => {
     try {
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-8a855376/stores/${store.id}/cart/${sessionId}`, {
-        headers: {
-          'Authorization': `Bearer ${publicAnonKey}`,
-        },
-      });
+  const headers: HeadersInit = publicAnonKey ? { 'Authorization': `Bearer ${publicAnonKey}` } : {};
+  const response = await fetch(`${functionsBase}/make-server-8a855376/stores/${store.id}/cart/${sessionId}`, { headers });
 
       if (response.ok) {
         const data = await response.json();
@@ -106,12 +101,13 @@ export function Storefront({ store, products: productsProp, isEditable = false, 
 
   const saveCart = async () => {
     try {
-      await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-8a855376/stores/${store.id}/cart/save`, {
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+        ...(publicAnonKey ? { 'Authorization': `Bearer ${publicAnonKey}` } : {}),
+      };
+  await fetch(`${functionsBase}/make-server-8a855376/stores/${store.id}/cart/save`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${publicAnonKey}`,
-        },
+        headers,
         body: JSON.stringify({ cartItems, sessionId }),
       });
     } catch (error) {
@@ -169,12 +165,13 @@ export function Storefront({ store, products: productsProp, isEditable = false, 
 
   const handleOrderComplete = async (orderData: any) => {
     try {
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-8a855376/stores/${store.id}/orders`, {
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+        ...(publicAnonKey ? { 'Authorization': `Bearer ${publicAnonKey}` } : {}),
+      };
+  const response = await fetch(`${functionsBase}/make-server-8a855376/stores/${store.id}/orders`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${publicAnonKey}`,
-        },
+        headers,
         body: JSON.stringify(orderData),
       });
 

@@ -114,7 +114,7 @@ export class PaymentProcessor {
     }
   }
 
-  public async processTestPayment(paymentDetails: PaymentDetails): Promise<PaymentResult> {
+  public async processTestPayment(_paymentDetails: PaymentDetails): Promise<PaymentResult> {
     // Simulate payment processing for demo/test purposes
     return new Promise((resolve) => {
       setTimeout(() => {

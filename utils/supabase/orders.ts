@@ -3,7 +3,6 @@ import { Database } from './types';
 
 type Order = Database['public']['Tables']['orders']['Row'];
 type OrderInsert = Database['public']['Tables']['orders']['Insert'];
-type OrderUpdate = Database['public']['Tables']['orders']['Update'];
 type OrderItem = Database['public']['Tables']['order_items']['Row'];
 type OrderItemInsert = Database['public']['Tables']['order_items']['Insert'];
 

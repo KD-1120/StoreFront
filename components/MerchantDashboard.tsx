@@ -1,4 +1,3 @@
-import { AuthDialog } from './AuthDialog';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { DashboardHeader } from './DashboardHeader';
@@ -12,6 +11,13 @@ import { UserProfile } from './UserProfile';
 import { StoreBuilderPanel } from './StoreBuilderPanel';
 import { StoreService, dbStoreToAppStore } from '../utils/supabase/stores';
 import { toast } from 'sonner';
+import { CustomersManager } from './CustomersManager';
+import { InvoicesPanel } from './InvoicesPanel';
+import { PayoutsPanel } from './PayoutsPanel';
+import { SubscriptionsPanel } from './SubscriptionsPanel';
+import { TransactionsPanel } from './TransactionsPanel';
+import { UsagePanel } from './UsagePanel';
+import { WalletPanel } from './WalletPanel';
 
 export function MerchantDashboard() {
   const { user, loading } = useAuth();
@@ -39,16 +45,17 @@ export function MerchantDashboard() {
         setStore(appStore);
       } else {
         // User has no stores, create a default store
+        if (!user) throw new Error('No authenticated user');
         const defaultStore: Store = {
-          id: `temp-${user.id}`,
-          name: user.user_metadata?.full_name ? `${user.user_metadata.full_name}'s Store` : 'My Store',
+          id: `temp-${user!.id}`,
+          name: user!.user_metadata?.full_name ? `${user!.user_metadata.full_name}'s Store` : 'My Store',
           subdomain: 'temp-store',
-          ownerId: user.id,
+          ownerId: user!.id,
           settings: {
             primaryColor: '#030213',
             logoUrl: '',
             description: 'Welcome to my online store',
-            contactEmail: user.email || '',
+            contactEmail: user!.email || '',
             currency: 'USD',
             heroButtonText: 'Shop Now',
             heroSubtext1: 'Free Shipping',
@@ -66,16 +73,21 @@ export function MerchantDashboard() {
     } catch (error) {
       console.error('Error loading store:', error);
       // Create fallback store on error
+      if (!user) {
+        setStore(null);
+        toast.error('Please sign in to manage your store');
+        return;
+      }
       const fallbackStore: Store = {
-        id: `fallback-${user.id}`,
+        id: `fallback-${user!.id}`,
         name: 'My Store',
         subdomain: 'fallback-store',
-        ownerId: user.id,
+        ownerId: user!.id,
         settings: {
           primaryColor: '#030213',
           logoUrl: '',
           description: 'Welcome to my online store',
-          contactEmail: user.email || '',
+          contactEmail: user!.email || '',
           currency: 'USD',
           heroButtonText: 'Shop Now',
           heroSubtext1: 'Free Shipping',
@@ -112,13 +124,29 @@ export function MerchantDashboard() {
             store={store}
             products={products}
             onStoreUpdate={setStore}
-            onPublish={setStore}
+            onPublish={() => {
+              // no-op for now; could trigger a refresh or toast
+            }}
           />
         );
       case 'products':
         return <ProductsManager store={store} />;
       case 'orders':
         return <OrdersManager store={store} />;
+      case 'customers':
+        return <CustomersManager storeId={store.id} />;
+      case 'invoices':
+        return <InvoicesPanel />;
+      case 'payouts':
+        return <PayoutsPanel storeId={store.id} />;
+      case 'transactions':
+        return <TransactionsPanel storeId={store.id} />;
+      case 'wallet':
+        return <WalletPanel storeId={store.id} />;
+      case 'usage':
+        return <UsagePanel />;
+      case 'subscriptions':
+        return <SubscriptionsPanel />;
       case 'profile':
         return <UserProfile />;
       case 'settings':

@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Package, ShoppingCart, DollarSign, TrendingUp, ExternalLink, Plus } from 'lucide-react';
 import { generateStoreUrl } from '../utils/routing';
-import { projectId } from '../utils/supabase/info';
+import { supabaseFunctionsBaseUrl } from '../utils/supabase/info';
 
 interface DashboardOverviewProps {
   store: any;
@@ -31,12 +31,12 @@ export function DashboardOverview({ store }: DashboardOverviewProps) {
       if (!token) return;
 
       // Load products
-      const productsResponse = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-8a855376/merchant/products`, {
+  const productsResponse = await fetch(`${supabaseFunctionsBaseUrl}/make-server-8a855376/merchant/products`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
       // Load orders
-      const ordersResponse = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-8a855376/merchant/orders`, {
+  const ordersResponse = await fetch(`${supabaseFunctionsBaseUrl}/make-server-8a855376/merchant/orders`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
